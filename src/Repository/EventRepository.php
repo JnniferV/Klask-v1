@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Event;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/** @extends ServiceEntityRepository<Event> */
+class EventRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Event::class);
+    }
+
+    //events dont endHourEvent est passé et qui n'ont pas encore été réinitialisés
+    public function findTerminatedNotReset(): array
+    {
+        return $this->createQueryBuilder('e')
+            ->where('e.endHourEvent <= :now')
+            ->andWhere('e.resetAt IS NULL')
+            ->setParameter('now', new \DateTimeImmutable())
+            ->getQuery()
+            ->getResult();
+    }
+}
