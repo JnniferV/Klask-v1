@@ -1,0 +1,145 @@
+/* KLASK · sidebar.css · crew profile panel */
+
+:root {
+    --c-sb-bg:    #F2D7D5;
+    --c-sb-panel: #E3C08D;
+    --c-sb-ink:   #3e2723;
+    --c-sb-soft:  #5d4037;
+}
+
+[data-theme="dark"] {
+    --c-sb-bg:    #1e1010;
+    --c-sb-panel: #2a1a0e;
+    --c-sb-ink:   #f5deb3;
+    --c-sb-soft:  #d4b896;
+}
+
+/* ── Trigger (toggle unique) ── */
+.trigger-tab {
+    position: fixed;
+    right: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 26px; height: 54px;
+    background: var(--c-sb-panel);
+    border: 1.5px solid var(--c-sb-ink);
+    border-right: none;
+    border-radius: 26px 0 0 26px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--c-sb-ink);
+    z-index: 10000;
+    box-shadow: -2px 0 10px rgba(139,0,0,.2);
+}
+.arrow-icon { font-size: .95rem; margin-left: 2px; display: inline-block; transition: transform .3s; }
+.trigger-tab.is-open .arrow-icon { transform: scaleX(-1); margin-left: 0; margin-right: 2px; }
+
+/* ── Panel ── */
+.sidebar-container {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(340px, 92vw);
+    right: -100%;
+    background: var(--c-sb-bg);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Fredoka One', cursive;
+    border-left: 1.5px solid var(--c-sb-panel);
+    box-shadow: -4px 0 28px rgba(0,0,0,.2);
+    transition: right .36s cubic-bezier(.25, 1, .5, 1);
+}
+.sidebar-container.open { right: 0; }
+
+.sidebar-main-box {
+    flex: 1;
+    min-height: 0;
+    margin: 10px;
+    background: var(--c-sb-panel);
+    border-radius: 3px;
+    border: 1.5px solid var(--c-sb-ink);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 0 0 1px rgba(207,170,101,.4), inset 0 0 24px rgba(0,0,0,.03);
+}
+
+/* ── Contenu ── */
+.sidebar-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 14px 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    gap: 10px;
+}
+
+.info-block { display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }
+
+.school-block {
+    padding: 8px 10px;
+    background: rgba(0,0,0,.06);
+    border-radius: 2px;
+    width: 100%;
+}
+.score-block {
+    padding: 6px 10px;
+    border-top: 1px solid rgba(0,0,0,.1);
+    width: 100%;
+}
+
+.label {
+    font: 700 .7rem/1 'Courier New', monospace;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--c-sb-soft);
+}
+.value {
+    font-size: 1.15rem;
+    color: var(--c-sb-ink);
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.avatar-block { display: flex; justify-content: center; padding: 6px 0; }
+
+.footer-block {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0,0,0,.1);
+    text-align: center;
+}
+.mentions-link {
+    font: .65rem/1 'Courier New', monospace;
+    color: var(--c-sb-soft);
+    text-decoration: none;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: .55;
+    transition: opacity .15s;
+}
+.mentions-link:hover { opacity: 1; }
+
+/* ── Grille élèves ── */
+.group-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    padding: 8px 4px;
+}
+.student-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    width: 66px;
+}
+.student-card:hover .avatar--sm { box-shadow: 0 0 0 3px #8B0000, 0 0 12px rgba(139,0,0,.5); }
+
+.student-pseudo { font: .62rem/1.2 'Courier New', monospace; font-weight: 600; text-align: center; word-break: break-word; color: var(--c-sb-ink); }
+.student-score  { font: .62rem/1 'Courier New', monospace; color: #8B0000; }
+
+.group-loading { width: 100%; text-align: center; font: .8rem/1.5 'Courier New', monospace; color: #888; padding: 1rem 0; }

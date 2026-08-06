@@ -1,0 +1,25 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: '%env(APP_SECRET)%'
+
+    # Session : durée 24h pour couvrir toute la journée de l'event.
+    # Les élèves n'ont pas de mot de passe — leur pseudo est leur identifiant de session.
+    session:
+        # Répertoire dédié : par défaut PHP écrit dans le save_path de WAMP, partagé avec les
+        # autres applis de la machine. Leur GC (php.ini : gc_maxlifetime = 1440) y supprimait
+        # les sessions Klask au bout de 24 min — les 24h ci-dessous n'étaient pas garanties.
+        save_path: '%kernel.project_dir%/var/sessions'
+        cookie_lifetime: 86400    # 24h — cookie persiste même si le browser se ferme
+        gc_maxlifetime: 86400     # 24h — serveur conserve les données de session
+        cookie_httponly: true     # inaccessible en JS (anti-XSS)
+        cookie_samesite: lax      # anti-CSRF sur les requêtes cross-site
+        cookie_secure: auto       # HTTPS uniquement dès que la requête l'est
+
+    #esi: true
+    #fragments: true
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file

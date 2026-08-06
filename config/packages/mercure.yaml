@@ -1,0 +1,13 @@
+mercure:
+    hubs:
+        default:
+            url: '%env(default::MERCURE_URL)%'
+            # URL relative : le proxy sert l'app et le hub sur la même origine, le navigateur
+            # la résout donc tout seul. Volontairement pas une variable d'env — le Symfony CLI
+            # écrase MERCURE_PUBLIC_URL avec le port Docker publié, ce qui rétablirait
+            # une origine http distincte (contenu mixte) et casserait l'accès mobile.
+            public_url: '/.well-known/mercure'
+            jwt:
+                secret: '%env(MERCURE_JWT_SECRET)%'
+                publish: '*'
+                subscribe: '*'
