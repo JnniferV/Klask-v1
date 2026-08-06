@@ -1,0 +1,17 @@
+{% set variant = variant|default('default') %}
+{% for type, messages in app.flashes %}
+    {% for msg in messages %}
+        {% if variant == 'toast' %}
+        <div class="map-toast map-toast--{{ type }}" role="alert">{{ msg }}</div>
+        {% elseif variant == 'admin' %}
+        <p class="flash-{{ type }}">{{ msg }}</p>
+        {% else %}
+        <div class="resultat {{ type == 'success' ? 'success-anim' : 'error-anim' }}">
+            {% if showTitle|default(false) %}
+            <h3>{{ type == 'success' ? '🎉 Inscription validée !' : '⚠️ Erreur' }}</h3>
+            {% endif %}
+            <p><strong>{{ msg }}</strong></p>
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endfor %}

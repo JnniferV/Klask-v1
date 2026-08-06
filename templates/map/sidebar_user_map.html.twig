@@ -1,0 +1,72 @@
+<div id="sidebar-trigger-zone" class="trigger-tab">
+    <span class="arrow-icon">◀</span>
+</div>
+
+<div id="sidebar-panel" class="sidebar-container">
+
+    <div class="sidebar-main-box">
+
+        <div class="sidebar-content">
+
+            {% if is_granted('ROLE_ACCOMPANYING') %}
+
+                <div class="info-block">
+                    <span class="label">MON GROUPE</span>
+                    <span class="value">{{ currentUser.group.code ?? '-' }}</span>
+                </div>
+
+                <div id="group-list" class="group-grid">
+                    {% for student in groupStudents %}
+                        <div class="student-card" data-id="{{ student.id }}" data-pseudo="{{ student.pseudo }}">
+                            <span class="avatar avatar--sm">
+                                <img src="{{ asset('images/coccitest.webp') }}" alt="{{ student.pseudo }}">
+                            </span>
+                            <span class="student-pseudo">{{ student.pseudo }}</span>
+                            <span class="student-score">{{ student.score }} pts</span>
+                        </div>
+                    {% else %}
+                        <p class="group-loading">Aucun élève dans ce groupe.</p>
+                    {% endfor %}
+                </div>
+
+            {% elseif currentUser %}
+
+                <div class="info-block">
+                    <span class="value">{{ currentUser.pseudo }}</span>
+                </div>
+
+                <div class="avatar-block">
+                    <span class="avatar avatar--md">
+                        <img src="{{ asset('images/coccitest.webp') }}"
+                             alt="Avatar de {{ currentUser.pseudo }}">
+                    </span>
+                </div>
+
+                <div class="info-block school-block">
+                    <span class="value">{{ currentUser.group?.establishment?.name|default('ÉTABLISSEMENT') }}</span>
+                    <span class="value">{{ currentUser.group?.name|default('CLASSE') }}</span>
+                </div>
+
+                <div class="info-block score-block">
+                    <span class="label">SCORE PERSO:</span>
+                    <span class="value" id="score-perso">{{ userScore|default(0) }}</span>
+                </div>
+
+                <div class="info-block score-block">
+                    <span class="label">SCORE GROUPE:</span>
+                    <span class="value" id="score-groupe">{{ groupScore|default(0) }}</span>
+                </div>
+
+            {% else %}
+                <div class="info-block">
+                    <p>Données indisponibles.</p>
+                </div>
+            {% endif %}
+
+            <div class="footer-block">
+                <a href="#" class="mentions-link">MENTIONS LEGALES</a>
+            </div>
+
+        </div>
+    </div>
+</div>

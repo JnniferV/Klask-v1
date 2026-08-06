@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{% block title %}Page d'accueil{% endblock %}</title>
+    <link rel="icon" href="{{ asset('images/favicon.png') }}">
+    <link rel="stylesheet" href="{{ asset('styles/fonts.css') }}">
+    <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+    {% block stylesheets %}
+    {% endblock %}
+
+    {% block javascripts %}
+        {% block importmap %}{% endblock %}
+        <script type="module" src="{{ asset('js/shared_body.js') }}"></script>
+    {% endblock %}
+</head>
+<body data-theme="standard">
+{% include 'structure/header.html.twig' %}
+{% include 'structure/shared_body.html.twig' %}
+
+<main>
+    {% block body %}{% endblock %}
+</main>
+{% include 'structure/footer.html.twig' %}
+<script>if('serviceWorker' in navigator && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') navigator.serviceWorker.register('/sw.js');</script>
+</body>
+</html>

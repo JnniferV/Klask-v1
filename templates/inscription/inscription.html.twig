@@ -1,0 +1,56 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block stylesheets %}{{ parent() }}{% endblock %}
+
+{% block javascripts %}{{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Création de profil</h1>
+
+        {% include 'structure/flashes.html.twig' with {showTitle: true} %}
+
+        {{ form_start(inscriptionForm, {
+            action: path('app_inscription_save'),
+            method: 'POST',
+            attr: { novalidate: 'novalidate' }
+        }) }}
+
+        <div class="form-group">
+            {{ form_label(inscriptionForm.pseudo, '1. Mon identité secrète') }}
+            <div class="identity-box">
+                {{ form_widget(inscriptionForm.pseudo) }}
+            </div>
+            {{ form_errors(inscriptionForm.pseudo) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(inscriptionForm.establishment, '2. Mon établissement') }}
+            <div class="select-wrapper">
+                {{ form_widget(inscriptionForm.establishment) }}
+            </div>
+            {{ form_errors(inscriptionForm.establishment) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(inscriptionForm.groupLevel, '3. Mon groupe de classe') }}
+            <div class="select-wrapper">
+                {{ form_widget(inscriptionForm.groupLevel) }}
+            </div>
+            {{ form_errors(inscriptionForm.groupLevel) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(inscriptionForm.groupCode, '4. Code de groupe') }}
+            {{ form_widget(inscriptionForm.groupCode) }}
+            {{ form_help(inscriptionForm.groupCode) }}
+            {{ form_errors(inscriptionForm.groupCode) }}
+        </div>
+
+        <input type="submit" value="Valider l'inscription">
+
+        {{ form_end(inscriptionForm) }}
+    </div>
+{% endblock %}

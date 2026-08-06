@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Bienvenue{% endblock %}
+
+{% block stylesheets %}{{ parent() }}{% endblock %}
+
+{% block body %}
+<div class="hud-window">
+
+    <div class="hud-cap hud-cap--top">
+        <h1>Bienvenue<span>{{ pseudo|split(' ')|first }}</span></h1>
+    </div>
+
+    <div class="hud-body">
+        <div class="welcome-card">
+
+            <span class="avatar avatar--lg">
+                <img
+                    src="{{ asset('images/coccitest.webp') }}"
+                    alt="Avatar de {{ pseudo }}"
+                >
+            </span>
+
+            <div class="welcome-score">
+                Score&nbsp;: <strong>0</strong> pt
+            </div>
+
+            <a href="{{ path('app_questionnaire') }}" class="btn-continuer">
+                Continuer
+            </a>
+
+        </div>
+    </div>
+
+    <div class="hud-cap hud-cap--bot"></div>
+
+</div>
+{% endblock %}

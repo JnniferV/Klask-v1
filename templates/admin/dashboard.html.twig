@@ -1,0 +1,99 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block main %}
+<div class="admin-dashboard">
+    <h1>Bienvenue dans le dashboard Klask</h1>
+
+    <div class="admin-cards">
+        <a href="{{ links.activities }}" class="admin-card admin-card--activities">
+            <div class="admin-card__icon">🗺️</div>
+            <div class="admin-card__label">Activités / Stands</div>
+        </a>
+        <a href="{{ links.spheres }}" class="admin-card admin-card--spheres">
+            <div class="admin-card__icon">⭕</div>
+            <div class="admin-card__label">Sphères</div>
+        </a>
+        <a href="{{ links.categories }}" class="admin-card admin-card--categories">
+            <div class="admin-card__icon">🏷️</div>
+            <div class="admin-card__label">Catégories</div>
+        </a>
+        <a href="{{ links.groups }}" class="admin-card admin-card--groups">
+            <div class="admin-card__icon">👥</div>
+            <div class="admin-card__label">Groupes</div>
+        </a>
+        <a href="{{ links.establishments }}" class="admin-card admin-card--establishments">
+            <div class="admin-card__icon">🏫</div>
+            <div class="admin-card__label">Établissements</div>
+        </a>
+        <a href="{{ links.users }}" class="admin-card admin-card--users">
+            <div class="admin-card__icon">👤</div>
+            <div class="admin-card__label">Élèves</div>
+        </a>
+        <a href="{{ links.accompanying }}" class="admin-card admin-card--accompanying">
+            <div class="admin-card__icon">🧑‍🏫</div>
+            <div class="admin-card__label">Accompagnateurs</div>
+        </a>
+        <button id="btn-alert-map"
+                class="admin-card admin-card--alert {{ alertMapActive ? 'admin-card--alert-on' : '' }}"
+                type="button">
+            <div class="admin-card__icon">🚨</div>
+            <div class="admin-card__label">Carte alerte : {{ alertMapActive ? 'ACTIVÉE' : 'Désactivée' }}</div>
+        </button>
+    </div>
+
+    <section class="admin-params">
+        <h2>Paramètres métier</h2>
+        <form id="params-form" action="{{ path('admin_parameters_save') }}" method="post">
+            {% for group, params in paramGroups %}
+            <fieldset class="admin-params__group">
+                <legend>{{ group }}</legend>
+                {% for p in params %}
+                <label class="admin-params__row">
+                    <span class="admin-params__key">{{ p.paramKey|replace({'_': ' '})|lower|capitalize }}</span>
+                    {% if p.paramType == 'boolean' %}
+                        <input type="checkbox" name="params[{{ p.paramKey }}]" value="1"
+                               data-alert-map="{{ p.paramKey == 'ALERT_MAP_ACTIVE' ? '1' : '0' }}"
+                               {{ p.getCastedValue() ? 'checked' : '' }}>
+                    {% else %}
+                        <input type="number" name="params[{{ p.paramKey }}]" value="{{ p.paramValue }}" min="0">
+                    {% endif %}
+                    {% if p.description %}<small>{{ p.description }}</small>{% endif %}
+                </label>
+                {% endfor %}
+            </fieldset>
+            {% endfor %}
+            <button type="submit" class="admin-params__save">Enregistrer les paramètres</button>
+        </form>
+    </section>
+</div>
+
+<script>
+(function () {
+    // Le bouton « Carte alerte » bascule la case du formulaire et le soumet : un seul point d'écriture.
+    const btn     = document.getElementById('btn-alert-map');
+    const form    = document.getElementById('params-form');
+    const alertCb = document.querySelector('[data-alert-map="1"]');
+
+    btn?.addEventListener('click', () => {
+        if (!alertCb || !form) return;
+        alertCb.checked = !alertCb.checked;
+        form.requestSubmit();
+    });
+
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const saveBtn = form.querySelector('.admin-params__save');
+        const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) return;
+
+        if (btn && alertCb) {
+            btn.classList.toggle('admin-card--alert-on', alertCb.checked);
+            btn.querySelector('.admin-card__label').textContent = 'Carte alerte : ' + (alertCb.checked ? 'ACTIVÉE' : 'Désactivée');
+        }
+        if (saveBtn) { saveBtn.textContent = 'Enregistré ✓'; setTimeout(() => { saveBtn.textContent = 'Enregistrer les paramètres'; }, 2000); }
+    });
+}());
+</script>
+{% endblock %}

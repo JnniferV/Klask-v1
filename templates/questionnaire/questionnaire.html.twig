@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Choisis ton parcours{% endblock %}
+
+{% block stylesheets %}{{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Choisis ton parcours</h1>
+
+        <p class="quiz-instruction">
+            <strong>1</strong> ce que tu préfères &nbsp;·&nbsp;
+            <strong>6</strong> ce qui te ressemble le moins.<br>
+            <em>Attention : tu ne peux utiliser chaque chiffre qu'une seule fois !</em>
+        </p>
+
+        {% include 'structure/flashes.html.twig' %}
+
+        {# ne pas oublier token CSRF #}
+        <form method="post" action="{{ path('app_questionnaire_save') }}" id="quiz-form" novalidate>
+
+            <table class="quiz-table">
+                <tbody>
+                    {% for letter, affirmation in affirmations %}
+                        <tr>
+                            <td>
+                                <strong>{{ letter }}.</strong> {{ affirmation.text }}
+                            </td>
+                            <td>
+                                <select name="ratings[{{ letter }}]" class="rating-select" required>
+                                    <option value="">—</option>
+                                    {% for i in 1..6 %}
+                                        <option value="{{ i }}">{{ i }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('questionnaire') }}">
+
+            <p class="quiz-error" id="quiz-error" aria-live="polite"></p>
+
+            <button type="submit" class="btn-submit" id="btn-submit">
+                Valider mon parcours
+            </button>
+
+        </form>
+    </div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="module" src="{{ asset('js/questionnaire.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Carte interactive{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('styles/map.css') }}">
+    <link rel="stylesheet" href="{{ asset('styles/sidebar.css') }}">
+{% endblock %}
+
+{% block body %}
+
+    {% if instructionImage %}
+    <button id="btn-help" class="btn-help" aria-label="Aide">?</button>
+
+    <div id="help-modal" class="intro-overlay" hidden role="dialog" aria-modal="true" aria-label="Instructions">
+        <div class="intro-panel">
+            <button id="btn-close-help" class="intro-close" aria-label="Fermer">✕</button>
+            <div class="intro-scroll" data-instruction-scroll></div>
+        </div>
+    </div>
+    <script type="application/json" id="instruction-image-url">{{ asset(instructionImage)|json_encode|raw }}</script>
+    {% endif %}
+
+    {% include 'structure/flashes.html.twig' with {variant: 'toast'} %}
+
+    {# wrapper principal — data-student pour CSS/JS conditionnel #}
+    <div class="map-wrapper"{% if is_granted('ROLE_STUDENT') %} data-student{% endif %}>
+
+        <div class="map-area">
+            <div class="map-canvas">
+                <img
+                    id="map-plan"
+                    class="map-plan"
+                    src="{{ asset(alertMapActive ? 'images/carte_alerte.webp' : 'images/carte-simple.svg') }}"
+                    data-src-normal="{{ asset('images/carte-simple.svg') }}"
+                    data-src-alert="{{ asset('images/carte_alerte.webp') }}"
+                    alt="Plan de la salle"
+                    fetchpriority="high"
+                    draggable="false"
+                >
+                {# Calque sphères et activités — rempli par map.js #}
+                <div class="map-overlays" id="map-overlays" aria-live="polite">
+                    <p class="map-loading" id="map-loading">Chargement…</p>
+
+                    {# Bulle info #}
+                    <div id="activity-bubble" class="activity-bubble" hidden>
+                        <button id="btn-close-bubble" class="btn-close-bubble" aria-label="Fermer">✕</button>
+                        <p id="bubble-name" class="bubble-name"></p>
+                        <p id="bubble-desc" class="bubble-desc"></p>
+                        <p id="bubble-wait" class="bubble-wait"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{ include('map/sidebar_user_map.html.twig') }}
+
+    </div>
+
+    {% if is_granted('ROLE_STUDENT') %}
+    <button id="btn-scan" class="btn-scan" aria-label="Scanner un QR code">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3m0 3h3M20 14h.01"/>
+        </svg>
+    </button>
+    {% endif %}
+
+    {% if showIntro and instructionImage %}
+    <aside id="intro-overlay" class="intro-overlay" role="dialog" aria-modal="true" aria-label="Instructions">
+        <div class="intro-panel">
+            <div class="intro-scroll" data-instruction-scroll></div>
+            <button type="button" class="intro-ack" data-intro-ack="{{ path('app_map_intro_ack') }}">J'ai compris</button>
+        </div>
+    </aside>
+    {% endif %}
+
+{% endblock %}
+
+{% block importmap %}{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="application/json" id="map-bootstrap">{"mapData":{{ spheresJson|raw }},"topSpheres":{{ topSpheresJson|raw }},"bottomSpheres":{{ bottomSpheresJson|raw }},"parcours":{{ parcoursJson|raw }},"scanned":{{ scannedJson|raw }},"mercureUrl":{{ mercure(mercureTopics)|json_encode|raw }},"notification":{{ lastNotification|json_encode|raw }},"alertMapActive":{{ alertMapActive ? 'true' : 'false' }}}</script>
+    <script type="module" src="{{ asset('js/map.js') }}"></script>
+
+    {% if is_granted('ROLE_ACCOMPANYING') %}
+    <script type="application/json" id="accompanying-config">{{- {
+        pokeUrl:   path('app_accompanying_poke', {id: '__ID__'}),
+        csrfToken: csrf_token('poke')
+    }|json_encode|raw -}}</script>
+    <script type="module" src="{{ asset('js/accompanying-sidebar.js') }}"></script>
+    {% endif %}
+
+    {% if is_granted('ROLE_STUDENT') %}
+    <script type="application/json" id="scan-config">{{- {
+        scanUrl:   path('app_scan'),
+        csrfToken: csrf_token('scan'),
+        libUrl:    asset('js/vendor/html5-qrcode.min.js')
+    }|json_encode|raw -}}</script>
+    <script type="module" src="{{ asset('js/student-scan.js') }}"></script>
+    {% endif %}
+{% endblock %}

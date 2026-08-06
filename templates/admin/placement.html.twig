@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Placer : {{ label }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('styles/admin.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="placement-wrap">
+
+    {% include 'structure/flashes.html.twig' with {variant: 'admin'} %}
+
+    <p class="placement-hint">Cliquez sur le plan pour positionner <strong>{{ label }}</strong>.</p>
+
+    {% if type == 'sphere' %}
+    <div class="mode-bar">
+        <label><input type="radio" name="mapMode" value="sphere" checked> Déplacer la sphère</label>
+        <label><input type="radio" name="mapMode" value="activity"> Ajouter une activité</label>
+    </div>
+    {% endif %}
+
+    <div class="placement-map-box" id="map-box">
+        <img src="{{ asset('images/carte-simple.svg') }}" alt="Plan" draggable="false">
+        <div class="placement-layer" id="ghosts"></div>
+        <div class="placement-marker {{ type == 'sphere' ? 'sphere' : 'pin' }}" id="marker"></div>
+        {% if type == 'sphere' %}
+        <div class="placement-marker pin" id="act-pin" style="display:none"></div>
+        {% endif %}
+    </div>
+
+    <form method="post" class="placement-form">
+        <label>X (%) <input type="number" step="0.01" name="pointX" id="pointX" value="{{ pointX }}" required></label>
+        <label>Y (%) <input type="number" step="0.01" name="pointY" id="pointY" value="{{ pointY }}" required></label>
+        {% if radius is not null %}
+        <label>Rayon (%) <input type="number" step="0.01" name="radius" id="radius" value="{{ radius }}" required></label>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">Enregistrer la position</button>
+        <a href="{{ backUrl }}" class="btn btn-secondary">Retour</a>
+        {% if type == 'sphere' %}
+        <button type="button" id="auto-bound" class="btn btn-outline-secondary" title="Recalcule le centre et le rayon en englobant toutes les activités de cette sphère">↔ Ajuster à mes activités</button>
+        {% endif %}
+    </form>
+
+    {% if type == 'sphere' and categories is not empty %}
+    <form id="activity-form" class="act-form" action="{{ path('admin_activity_new_on_map') }}" method="post" style="display:none">
+        <input type="hidden" name="sphereId" value="{{ id }}">
+        <input type="hidden" name="pointX" id="act-x">
+        <input type="hidden" name="pointY" id="act-y">
+        <strong class="act-form__heading">Nouvelle activité</strong>
+        <label>Nom <input type="text" name="name" required placeholder="Nom de l'activité"></label>
+        <label>Description <input type="text" name="description" placeholder="Optionnel"></label>
+        <label>Catégorie
+            <select name="categoryId" required>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}">{{ cat.type }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit" class="btn btn-primary">✓ Créer l'activité</button>
+    </form>
+    {% endif %}
+
+</div>
+
+<script type="application/json" id="map-data">{{ mapJson|raw }}</script>
+<script type="application/json" id="placement-config">{{- { type: type, sphereId: id, suggestedBounds: suggestedBounds }|json_encode|raw -}}</script>
+<script type="module" src="{{ asset('js/admin-placement.js') }}"></script>
+{% endblock %}
