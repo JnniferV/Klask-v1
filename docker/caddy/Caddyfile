@@ -1,0 +1,29 @@
+# Reverse proxy de développement : UNE seule origine https pour l'app ET le hub Mercure.
+# Conséquences : plus de contenu mixte (page https / SSE http), plus de CORS à maintenir,
+# et le hub n'est jamais joignable depuis le LAN — seul ce proxy l'atteint, via le réseau Docker.
+#
+# Certificat mkcert généré par scripts/start-mobile-https.bat
+# (couvre localhost, 127.0.0.1 et l'IP LAN pour le scan QR mobile).
+
+{
+	# Pas d'ACME ni de redirection automatique : le certificat est fourni explicitement
+	auto_https off
+}
+
+:443 {
+	tls /etc/caddy/certs/dev.pem /etc/caddy/certs/dev-key.pem
+
+	# Hub Mercure — joint par le réseau Docker interne, jamais exposé directement.
+	# flush_interval -1 : obligatoire en SSE, sinon les événements restent bufferisés.
+	handle /.well-known/mercure* {
+		reverse_proxy mercure:80 {
+			flush_interval -1
+		}
+	}
+
+	# Application Symfony sur l'hôte, lancée en clair (--no-tls) : le TLS est terminé ici.
+	# reverse_proxy pose X-Forwarded-Proto/Host/For, lus par SYMFONY_TRUSTED_PROXIES.
+	handle {
+		reverse_proxy host.docker.internal:8000
+	}
+}
