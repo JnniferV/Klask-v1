@@ -13,15 +13,16 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\ColorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\NumberField;
-use EasyCorp\Bundle\EasyAdminBundle\Field\TextareaField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 
+/** @extends AbstractCrudController<Sphere> */
 class SphereCrudController extends AbstractCrudController
 {
     public function __construct(
         private readonly MapService $mapService,
         private readonly RealtimeNotifier $notifier,
-    ) {}
+    ) {
+    }
 
     public static function getEntityFqcn(): string
     {
@@ -41,9 +42,9 @@ class SphereCrudController extends AbstractCrudController
 
         if ($entity instanceof Sphere) {
             $this->notifier->publish('map-update', [
-                'type'  => 'sphere',
-                'id'    => $entity->getId(),
-                'name'  => $entity->getName(),
+                'type' => 'sphere',
+                'id' => $entity->getId(),
+                'name' => $entity->getName(),
                 'color' => $entity->getColor(),
             ]);
         }
@@ -67,10 +68,8 @@ class SphereCrudController extends AbstractCrudController
     {
         yield TextField::new('name', 'Nom');
         yield ColorField::new('color', 'Couleur');
-        yield TextareaField::new('description', 'Description')->hideOnIndex();
-        yield TextField::new('icon', 'Icône (CSS class)')->hideOnIndex();
         yield AssociationField::new('activities', 'Activités')->hideOnIndex();
-        // Géométrie calculée depuis les stands / posée via « Placer sur la carte » — consultation seule
+        // géométrie calculée depuis les stands ou posée via « placer sur la carte », consultation seule
         yield NumberField::new('pointX', 'Centre X (%)')->setNumDecimals(2)->onlyOnDetail();
         yield NumberField::new('pointY', 'Centre Y (%)')->setNumDecimals(2)->onlyOnDetail();
         yield NumberField::new('radius', 'Rayon (%)')->setNumDecimals(2)->onlyOnDetail();

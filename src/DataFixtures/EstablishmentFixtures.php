@@ -10,41 +10,30 @@ class EstablishmentFixtures extends Fixture
 {
     public const ESTABLISHMENT_REFERENCE = 'establishment';
 
+    // établissements inscrits, noms tels que saisis
+    /** @var list<string> */
     private const NAMES = [
-        'Lycée Jean-Marie Le Bris - Douarnenez',
-        'Lycée Saint-Joseph - Concarneau',
-        'Lycée Pierre Guéguin - Concarneau',
-        'Lycée Saint-Gabriel - Pont-l\'Abbé',
-        'Lycée Laennec - Pont-l\'Abbé',
-        'Lycée Le Paraclet - Quimper',
-        'Lycée Sainte-Thérèse - Quimper',
-        'Lycée Le Likès - Quimper',
-        'Lycée Yves Thépot - Quimper',
-        'Lycée de Cornouaille - Quimper',
-        'Lycée Brizeux - Quimper',
-        'Lycée Chaptal - Quimper',
-        'Collège Saint-Blaise - Douarnenez',
-        'Collège des Sables Blancs - Concarneau',
-        'Collège Saint-Joseph - Fouesnant',
-        'Collège de Kervihan - Fouesnant',
-        'Collège Laennec - Pont-l\'Abbé',
-        'Collège Diwan - Quimper',
-        'Collège Sainte-Thérèse - Quimper',
-        'Collège Saint-Jean Baptiste - Quimper',
-        'Collège Saint-Yves - Quimper',
-        'Collège Brizeux - Quimper',
-        'Collège Max Jacob - Quimper',
-        'Collège La Tour d\'Auvergne - Quimper',
+        // matin
+        'Primaire CM2', // nom réel non communiqué, provisoire
+        'Collège Germain Pensivy / Rosporden',
+        'La Tourelle',
+        // après-midi, Le Porzou est sur les deux sessions
+        'collège Le Porzou',
+        'collège François Collobert',
+        'Collège St Michel',
+        'LYCÉE BRIZEUX',
+        'Le Likès La Salle',
     ];
 
     public function load(ObjectManager $manager): void
     {
-        foreach (self::NAMES as $index => $name) {
+        foreach (self::NAMES as $name) {
             $establishment = new Establishment();
             $establishment->setName($name);
 
             $manager->persist($establishment);
-            $this->addReference(self::ESTABLISHMENT_REFERENCE . '_' . $index, $establishment);
+            // référencé par nom, pas par index
+            $this->addReference(self::ESTABLISHMENT_REFERENCE.'_'.$name, $establishment);
         }
 
         $manager->flush();

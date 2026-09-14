@@ -2,27 +2,29 @@
 
 {% block title %}Bienvenue{% endblock %}
 
-{% block stylesheets %}{{ parent() }}{% endblock %}
 
 {% block body %}
 <div class="hud-window">
 
-    <div class="hud-cap hud-cap--top">
-        <h1>Bienvenue<span>{{ pseudo|split(' ')|first }}</span></h1>
+    <div class="hud-cap">
+        <h1>Bienvenue<span style="--len:{{ pseudo|length }}">{{ pseudo }}</span></h1>
     </div>
 
     <div class="hud-body">
         <div class="welcome-card">
 
+            {# flash d'inscription, consommé ici et plus au questionnaire #}
+            {% include 'structure/flashes.html.twig' %}
+
             <span class="avatar avatar--lg">
                 <img
-                    src="{{ asset('images/coccitest.webp') }}"
+                    src="{{ asset(avatar(pseudo)) }}"
                     alt="Avatar de {{ pseudo }}"
                 >
             </span>
 
             <div class="welcome-score">
-                Score&nbsp;: <strong>0</strong> pt
+                Score&nbsp;: <strong>0</strong> point
             </div>
 
             <a href="{{ path('app_questionnaire') }}" class="btn-continuer">
@@ -31,8 +33,6 @@
 
         </div>
     </div>
-
-    <div class="hud-cap hud-cap--bot"></div>
 
 </div>
 {% endblock %}

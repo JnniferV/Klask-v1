@@ -1,4 +1,4 @@
-# Enable stateless CSRF protection for forms and logins/logouts
+# enable stateless CSRF protection for forms and logins/logouts
 framework:
     form:
         csrf_protection:
@@ -6,10 +6,10 @@ framework:
 
     csrf_protection:
         check_header: true   # repris de l'ex-ux_turbo.yaml — validation du jeton via en-tête
-        # Pas de 'logout' ici : le firewall a enable_csrf à null, donc aucun jeton n'est vérifié
+        # pas de 'logout' ici : le firewall a enable_csrf à null, donc aucun jeton n'est vérifié
         # à la déconnexion et aucun template n'en génère. L'y laisser laissait croire que la
         # protection était active, et activer enable_csrf casserait d'un coup les liens
-        # <a href="/logout"> du header et du menu admin, qui ne portent pas de jeton.
+        # <a href="/logout"> du header et du menu admin, qui ne portent pas de jeton
         stateless_token_ids:
             - submit
             - authenticate

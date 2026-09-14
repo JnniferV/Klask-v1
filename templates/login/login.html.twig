@@ -2,7 +2,6 @@
 
 {% block title %}Connexion{% endblock %}
 
-{% block stylesheets %}{{ parent() }}{% endblock %}
 
 {% block body %}
     <div class="container">
@@ -41,6 +40,10 @@
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
             <input type="submit" value="Se connecter">
+
+            <p class="form-footer">
+                <a href="{{ path('app_forgot_password_request') }}">Mot de passe oublié ?</a>
+            </p>
         </form>
     </div>
 {% endblock %}

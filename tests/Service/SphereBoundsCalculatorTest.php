@@ -7,7 +7,6 @@ use App\Service\SphereBoundsCalculator;
 use App\Tests\Support\EntityBuilder;
 use PHPUnit\Framework\TestCase;
 
-
 class SphereBoundsCalculatorTest extends TestCase
 {
     public function testCentreEtRayonCalculesDepuisLesCoordonneesDesStands(): void

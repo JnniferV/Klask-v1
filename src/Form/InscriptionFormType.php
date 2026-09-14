@@ -3,8 +3,8 @@
 namespace App\Form;
 
 use App\Entity\Establishment;
+use App\Entity\Group;
 use App\Entity\User;
-use App\Repository\GroupRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -14,51 +14,46 @@ use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 
+/** @extends AbstractType<User> */
 class InscriptionFormType extends AbstractType
 {
-    public function __construct(private readonly GroupRepository $groupRepository)
-    {
-    }
-
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $levels = $this->groupRepository->findDistinctLevels();
-        $levelChoices = array_combine($levels, $levels);
-
         $builder
             ->add('pseudo', TextType::class, [
-                'label'  => 'Mon identité secrète',
+                'label' => 'Mon identité secrète',
                 'mapped' => false,
-                'data'   => $options['nom_depart'],
-                'attr'   => ['readonly' => true],
+                'data' => $options['nom_depart'],
+                'attr' => ['readonly' => true],
             ])
             ->add('establishment', EntityType::class, [
-                'label'        => 'Mon établissement',
-                'mapped'       => false,
-                'class'        => Establishment::class,
+                'label' => 'Mon établissement',
+                'mapped' => false,
+                'class' => Establishment::class,
                 'choice_label' => 'name',
-                'placeholder'  => '-- Sélectionnez votre établissement --',
-                'constraints'  => [
+                'placeholder' => '-- Sélectionnez votre établissement --',
+                'constraints' => [
                     new NotBlank(message: 'Veuillez sélectionner votre établissement.'),
                 ],
             ])
             ->add('groupLevel', \Symfony\Component\Form\Extension\Core\Type\ChoiceType::class, [
-                'label'       => 'Ma classe',
-                'mapped'      => false,
+                'label' => 'Ma classe',
+                'mapped' => false,
                 'placeholder' => '-- Sélectionnez votre classe --',
-                'choices'     => $levelChoices,
+                'choices' => array_combine(Group::LEVELS, Group::LEVELS),
                 'constraints' => [
                     new NotBlank(message: 'Veuillez sélectionner votre classe.'),
                 ],
             ])
             ->add('groupCode', TextType::class, [
                 'label' => 'Code de groupe',
-                'attr'  => [
-                    'placeholder'  => 'Ex : GRP0001',
-                    'maxlength'    => 10,
+                'mapped' => false, // sert à retrouver le groupe, le lien est porté par user.group_id
+                'attr' => [
+                    'placeholder' => 'Ex : GRP0001',
+                    'maxlength' => 10,
                     'autocomplete' => 'off',
                 ],
-                'help'        => 'Fourni par votre accompagnateur avant l\'événement.',
+                'help' => 'Fourni par votre accompagnateur avant l\'événement.',
                 'constraints' => [
                     new NotBlank(message: 'Le code de groupe est obligatoire.'),
                     new Length(

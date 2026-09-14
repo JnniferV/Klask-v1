@@ -3,6 +3,7 @@
 namespace App\Tests\Entity;
 
 use App\Entity\Notification;
+use App\Tests\Support\EntityBuilder;
 use PHPUnit\Framework\TestCase;
 
 class NotificationTest extends TestCase
@@ -35,14 +36,6 @@ class NotificationTest extends TestCase
         $this->assertSame('event-alert/class/GRP0001', $this->notification('class', 'GRP0001')->getMercureTopic());
     }
 
-    public function testTopicCibleUnEleve(): void
-    {
-        $this->assertSame(
-            'event-alert/user/Renard cosmique',
-            $this->notification('individual', 'Renard cosmique')->getMercureTopic()
-        );
-    }
-
     public function testUnTypeInconnuRetombeSurLeTopicGeneral(): void
     {
         $this->assertSame('event-alert', $this->notification('inconnu')->getMercureTopic());
@@ -50,19 +43,19 @@ class NotificationTest extends TestCase
 
     public function testLePayloadMercureContientLesChampsAttendusParLeFront(): void
     {
-        $notification = $this->notification('all')
+        $notification = EntityBuilder::withId($this->notification('all'), 42)
             ->setTitle('Conférence')
             ->setLink('https://klask.test/infos')
-            ->setType('warning')
-            ->setColor('#C0604D');
+            ->setType('warning');
 
+        // id requis rejeu
         $this->assertSame([
-            'alert'   => true,
-            'title'   => 'Conférence',
+            'alert' => true,
+            'id' => 42,
+            'title' => 'Conférence',
             'message' => 'Message de test',
-            'link'    => 'https://klask.test/infos',
-            'type'    => 'warning',
-            'color'   => '#C0604D',
+            'link' => 'https://klask.test/infos',
+            'type' => 'warning',
         ], $notification->toMercurePayload());
     }
 

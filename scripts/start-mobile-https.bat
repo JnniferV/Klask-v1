@@ -6,7 +6,7 @@ cd /d "%~dp0.."
 
 REM >>> Seule valeur a adapter quand ton IP WiFi change (ipconfig -> Adresse IPv4).
 REM     Mets la meme dans APP_URL (.env.local), puis relance les fixtures (QR codes).
-set LAN_IP=192.168.1.17
+set LAN_IP=192.168.1.33
 
 REM Certificat mkcert (localhost + IP LAN pour le scan QR mobile).
 REM Le proxy Caddy consomme directement le couple PEM (plus besoin d'export .p12).

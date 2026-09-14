@@ -14,10 +14,7 @@ class NotificationRepository extends ServiceEntityRepository
         parent::__construct($registry, Notification::class);
     }
 
-    /**
-     * notif programmées dont l'heure est passée et non encore envoyées
-     * @return Notification[]
-     */
+    /** @return Notification[] */
     public function findPendingScheduled(): array
     {
         return $this->createQueryBuilder('n')
@@ -28,10 +25,7 @@ class NotificationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * notif publiées récemment, la plus récente d'abord
-     * @return Notification[]
-     */
+    /** @return Notification[] */
     public function findSentSince(\DateTimeImmutable $since): array
     {
         return $this->createQueryBuilder('n')

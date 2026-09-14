@@ -8,6 +8,7 @@ use App\Entity\Sphere;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/** @extends ServiceEntityRepository<Activity> */
 class ActivityRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -26,7 +27,7 @@ class ActivityRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
-    /** @return Activity[] Stands (catégorie TYPE_STAND) d'une sphère */
+    /** @return Activity[] */
     public function findStandsBySphere(Sphere|int $sphere): array
     {
         return $this->createQueryBuilder('a')
@@ -39,10 +40,7 @@ class ActivityRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * Activités Atelier/Conférence avec un horaire défini
-     * @return Activity[]
-     */
+    /** @return Activity[] */
     public function findScheduledActivities(): array
     {
         return $this->createQueryBuilder('a')
@@ -55,10 +53,7 @@ class ActivityRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * Activités hors sphère (Atelier, Conférence) pour affichage carte
-     * @return Activity[]
-     */
+    /** @return Activity[] */
     public function findStandaloneActivities(): array
     {
         return $this->createQueryBuilder('a')
@@ -71,9 +66,7 @@ class ActivityRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    /**
-     * @return array<int, bool> [activityId => est un stand]
-     */
+    /** @return array<int, bool> */
     public function findMapIdsByStandFlag(): array
     {
         $rows = $this->createQueryBuilder('a')
@@ -85,14 +78,14 @@ class ActivityRepository extends ServiceEntityRepository
             ->getScalarResult();
 
         return array_map(
-            static fn(string $type): bool => $type === ActivityCategory::TYPE_STAND,
+            static fn (string $type): bool => ActivityCategory::TYPE_STAND === $type,
             array_column($rows, 'type', 'id')
         );
     }
 
     /**
-     * Stands de plusieurs sphères en 1 seule requête
-     * @param  int[]                $sphereIds
+     * @param int[] $sphereIds
+     *
      * @return array<int, Activity[]>
      */
     public function findStandsBySpheres(array $sphereIds): array

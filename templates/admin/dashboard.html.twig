@@ -46,6 +46,7 @@
     <section class="admin-params">
         <h2>Paramètres métier</h2>
         <form id="params-form" action="{{ path('admin_parameters_save') }}" method="post">
+            <input type="hidden" name="_token" value="{{ csrf_token('admin_parameters_save') }}">
             {% for group, params in paramGroups %}
             <fieldset class="admin-params__group">
                 <legend>{{ group }}</legend>
@@ -71,7 +72,7 @@
 
 <script>
 (function () {
-    // Le bouton « Carte alerte » bascule la case du formulaire et le soumet : un seul point d'écriture.
+    // le bouton « Carte alerte » bascule la case du formulaire et le soumet : un seul point d'écriture
     const btn     = document.getElementById('btn-alert-map');
     const form    = document.getElementById('params-form');
     const alertCb = document.querySelector('[data-alert-map="1"]');

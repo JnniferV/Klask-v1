@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Activity;
+use App\Entity\Group;
 use App\Entity\Scan;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -11,7 +12,6 @@ use Doctrine\Persistence\ManagerRegistry;
 /** @extends ServiceEntityRepository<Scan> */
 class ScanRepository extends ServiceEntityRepository
 {
-    // Fenêtre (min) des scans récents
     public const OCCUPANCY_WINDOW_MIN = 10;
 
     public function __construct(ManagerRegistry $registry)
@@ -19,7 +19,6 @@ class ScanRepository extends ServiceEntityRepository
         parent::__construct($registry, Scan::class);
     }
 
-    // scans récents d'une activité pour calculer attente
     public function countRecentForActivity(Activity $activity): int
     {
         return (int) $this->createQueryBuilder('s')
@@ -27,21 +26,18 @@ class ScanRepository extends ServiceEntityRepository
             ->where('s.activity = :activity')
             ->andWhere('s.hourValidation >= :since')
             ->setParameter('activity', $activity)
-            ->setParameter('since', new \DateTimeImmutable('-' . self::OCCUPANCY_WINDOW_MIN . ' minutes'))
+            ->setParameter('since', new \DateTimeImmutable('-'.self::OCCUPANCY_WINDOW_MIN.' minutes'))
             ->getQuery()
             ->getSingleScalarResult();
     }
 
-    /**
-     * ccans récents groupés par activité :indicateur « presque plein / plein » de la carte
-     * @return array<int, int> [activityId => nb scans récents]
-     */
+    /** @return array<int, int> */
     public function countRecentGroupedByActivity(): array
     {
         $rows = $this->createQueryBuilder('s')
             ->select('IDENTITY(s.activity) AS activityId', 'COUNT(s.id) AS cnt')
             ->where('s.hourValidation >= :since')
-            ->setParameter('since', new \DateTimeImmutable('-' . self::OCCUPANCY_WINDOW_MIN . ' minutes'))
+            ->setParameter('since', new \DateTimeImmutable('-'.self::OCCUPANCY_WINDOW_MIN.' minutes'))
             ->groupBy('s.activity')
             ->getQuery()
             ->getScalarResult();
@@ -62,10 +58,7 @@ class ScanRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
-    /**
-     * ID des activités scannées par l'élève, du plus récent au plus ancien
-     * @return int[]
-     */
+    /** @return int[] */
     public function findActivityIdsByUser(User $user): array
     {
         $rows = $this->createQueryBuilder('s')
@@ -76,13 +69,14 @@ class ScanRepository extends ServiceEntityRepository
             ->getQuery()
             ->getScalarResult();
 
-        return array_map(fn(array $r) => (int) $r['activityId'], $rows);
+        return array_map(fn (array $r) => (int) $r['activityId'], $rows);
     }
 
-    //sphères les plus visitées
+    /** @return list<array{sphere: mixed, visits: mixed}> */
     public function findMostVisitedSpheres(): array
     {
-        return $this->createQueryBuilder('s')
+        /** @var list<array{sphere: mixed, visits: mixed}> */
+        $rows = $this->createQueryBuilder('s')
             ->select('sp.name AS sphere', 'COUNT(s.id) AS visits')
             ->join('s.activity', 'a')
             ->join('a.sphere', 'sp')
@@ -90,12 +84,50 @@ class ScanRepository extends ServiceEntityRepository
             ->orderBy('visits', 'DESC')
             ->getQuery()
             ->getScalarResult();
+
+        return $rows;
     }
 
     public function countAll(): int
     {
         return (int) $this->createQueryBuilder('s')
             ->select('COUNT(s.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countByUser(User $user): int
+    {
+        return (int) $this->createQueryBuilder('s')
+            ->select('COUNT(s.id)')
+            ->where('s.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /** @return list<array{activity: mixed, visits: mixed}> */
+    public function findTopActivities(int $limit = 10): array
+    {
+        /** @var list<array{activity: mixed, visits: mixed}> */
+        $rows = $this->createQueryBuilder('s')
+            ->select('a.name AS activity', 'COUNT(s.id) AS visits')
+            ->join('s.activity', 'a')
+            ->groupBy('a.id')
+            ->orderBy('visits', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getScalarResult();
+
+        return $rows;
+    }
+
+    public function countInternshipScans(): int
+    {
+        return (int) $this->createQueryBuilder('s')
+            ->select('COUNT(s.id)')
+            ->join('s.activity', 'a')
+            ->where('a.isInternship = true')
             ->getQuery()
             ->getSingleScalarResult();
     }
@@ -109,6 +141,57 @@ class ScanRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
 
-        return $value !== null ? new \DateTimeImmutable($value) : null;
+        return null !== $value ? new \DateTimeImmutable((string) $value) : null;
+    }
+
+    public function findFirstAt(User $user): ?\DateTimeImmutable
+    {
+        $value = $this->createQueryBuilder('s')
+            ->select('MIN(s.hourValidation)')
+            ->where('s.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return null !== $value ? new \DateTimeImmutable((string) $value) : null;
+    }
+
+    /** @return Scan[] */
+    public function findByUserWithDetails(User $user): array
+    {
+        return $this->createQueryBuilder('s')
+            ->addSelect('a', 'c', 'sp')
+            ->join('s.activity', 'a')
+            ->join('a.category', 'c')
+            ->leftJoin('a.sphere', 'sp')
+            ->where('s.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('s.hourValidation', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /** @return list<array{sphereName: string, activityName: string, activityDescription: ?string, categoryType: string}> */
+    public function findGroupScanRows(Group $group): array
+    {
+        /** @var list<array{sphereName: string, activityName: string, activityDescription: ?string, categoryType: string}> $rows */
+        $rows = $this->createQueryBuilder('s')
+            ->select(
+                'COALESCE(sp.name, :unclassified) AS sphereName',
+                'a.name AS activityName',
+                'a.description AS activityDescription',
+                'c.type AS categoryType',
+            )
+            ->join('s.user', 'u')
+            ->join('s.activity', 'a')
+            ->join('a.category', 'c')
+            ->leftJoin('a.sphere', 'sp')
+            ->where('u.group = :group')
+            ->setParameter('group', $group)
+            ->setParameter('unclassified', 'Non classé')
+            ->getQuery()
+            ->getArrayResult();
+
+        return $rows;
     }
 }

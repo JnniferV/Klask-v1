@@ -1,16 +1,16 @@
 <header class="site-header">
     <a class="site-header__brand" href="/">
         Klask
-        <img src="{{ asset('images/logoklaskfinitsombrepetit.webp') }}" alt="" class="logo logo--std">
-        <img src="{{ asset('images/logoklaskfinitclairpetit.webp') }}"  alt="" class="logo logo--dark">
+        <img class="site-header__logo--light" src="{{ asset('images/logoklaskgrispetit.webp') }}" alt="" width="48" height="36">
+        <img class="site-header__logo--dark" src="{{ asset('images/logoklaskdorépetit.webp') }}" alt="" width="48" height="36">
     </a>
     <nav class="site-header__nav">
         {% if is_granted('ROLE_ADMIN') and app.request.get('_route') == 'app_map' %}
             <a href="{{ path('admin') }}" class="site-header__link">Admin</a>
         {% endif %}
         {% if is_granted('ROLE_ACCOMPANYING') or is_granted('ROLE_ADMIN') %}
-            <a href="{{ path('app_logout') }}" class="site-header__link site-header__logout">Déconnexion</a>
+            <a href="{{ path('app_logout') }}" class="site-header__link">Déconnexion</a>
         {% endif %}
-        <button id="theme-toggle" class="theme-toggle" aria-label="Changer de thème">🌙</button>
+        <button type="button" class="theme-toggle" aria-label="Changer de thème"></button>
     </nav>
 </header>

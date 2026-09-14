@@ -6,10 +6,13 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
+#[UniqueEntity(fields: ['email'], message: 'Cet e-mail est déjà utilisé.')]
+#[UniqueEntity(fields: ['pseudo'], message: 'Ce nom est déjà utilisé.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -29,25 +32,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $blockedUntil = null;
 
-    //compteur de scans invalides consécutifs. Remis à 0 après tout scan valide
+    // Doctrine: pas constructeur
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $createdAt = null;
+
     #[ORM\Column(options: ['default' => 0])]
     private int $invalidScanCount = 0;
 
     #[ORM\Column(nullable: true)]
     private ?int $score = null;
 
-    #[ORM\Column(length: 10, nullable: true)]
-    private ?string $groupCode = null;
-
     #[ORM\ManyToOne(inversedBy: 'users')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Authority $authority = null;
 
-    // Null pour les admins
     #[ORM\ManyToOne(inversedBy: 'users')]
     #[ORM\JoinColumn(nullable: true)]
     private ?Group $group = null;
-
 
     /**
      * @var Collection<int, Scan>
@@ -58,32 +59,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __construct()
     {
         $this->scans = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
     }
 
     public function __toString(): string
     {
-        return $this->pseudo ?? $this->email ?? 'User #' . $this->id;
+        return $this->pseudo ?? $this->email ?? 'User #'.$this->id;
     }
 
-    // id unique Security : email pour staff, pseudo pour les élèves (pas d'email)
     public function getUserIdentifier(): string
     {
         return $this->email ?? $this->pseudo ?? '';
     }
 
-    // La BDD stocke STUDENT/ADMIN - Symfony exige le préfixe ROLE_
+    // préfixe ROLE_
     public function getRoles(): array
     {
         $roles = [];
 
         foreach ($this->authority?->getAuthorityRoles() ?? [] as $authorityRole) {
-            $roles[] = 'ROLE_' . $authorityRole->getRole()->getNameRole();
+            $roles[] = 'ROLE_'.$authorityRole->getRole()->getNameRole();
         }
 
         return $roles ?: ['ROLE_STUDENT'];
     }
 
-    //efface les données sensibles en clair dans la mémoire
     public function eraseCredentials(): void
     {
     }
@@ -134,6 +134,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->blockedUntil;
     }
 
+    public function creditPoints(int $points): static
+    {
+        $this->score = ($this->score ?? 0) + $points;
+        $this->invalidScanCount = 0;
+
+        return $this;
+    }
+
+    /** @return bool */
+    public function registerInvalidScan(int $threshold, int $blockMinutes): bool
+    {
+        ++$this->invalidScanCount;
+
+        if ($this->invalidScanCount < $threshold) {
+            return false;
+        }
+
+        $this->blockedUntil = new \DateTimeImmutable('+'.$blockMinutes.' minutes');
+        $this->invalidScanCount = 0;
+
+        return true;
+    }
+
+    public function isBlocked(): bool
+    {
+        return null !== $this->blockedUntil && $this->blockedUntil > new \DateTimeImmutable();
+    }
+
     public function setBlockedUntil(?\DateTimeImmutable $blockedUntil): static
     {
         $this->blockedUntil = $blockedUntil;
@@ -161,18 +189,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setScore(?int $score): static
     {
         $this->score = $score;
-
-        return $this;
-    }
-
-    public function getGroupCode(): ?string
-    {
-        return $this->groupCode;
-    }
-
-    public function setGroupCode(?string $groupCode): static
-    {
-        $this->groupCode = $groupCode;
 
         return $this;
     }

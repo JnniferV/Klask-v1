@@ -4,7 +4,7 @@ doctrine:
 
         # IMPORTANT: You MUST configure your server version,
         # either here or in the DATABASE_URL env var (see .env file)
-        #server_version: '16'
+        # server_version: '16'
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
@@ -14,7 +14,7 @@ doctrine:
             engine: InnoDB
     orm:
         # true régénère les proxies à CHAQUE requête (coûteux, surtout sous Windows) ;
-        # ce mode ne régénère que si le fichier est absent ou le mapping a changé.
+        # ce mode ne régénère que si le fichier est absent ou le mapping a changé
         auto_generate_proxy_classes: file_not_exists_or_changed
         enable_lazy_ghost_objects: true
         report_fields_where_declared: true

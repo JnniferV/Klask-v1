@@ -2,10 +2,10 @@ mercure:
     hubs:
         default:
             url: '%env(default::MERCURE_URL)%'
-            # URL relative : le proxy sert l'app et le hub sur la même origine, le navigateur
-            # la résout donc tout seul. Volontairement pas une variable d'env — le Symfony CLI
-            # écrase MERCURE_PUBLIC_URL avec le port Docker publié, ce qui rétablirait
-            # une origine http distincte (contenu mixte) et casserait l'accès mobile.
+            # relative et FIGÉE : le hub est servi en same-origin par le proxy Caddy
+            # surtout pas d'env ici — le Symfony CLI injecte MERCURE_PUBLIC_URL=http://127.0.0.1:8090/…
+            # depuis le service Docker ; Authorization::createCookie lève alors une RuntimeException
+            # (« different second-level domain ») dès que la page est ouverte en IP LAN, donc sur mobile
             public_url: '/.well-known/mercure'
             jwt:
                 secret: '%env(MERCURE_JWT_SECRET)%'

@@ -40,7 +40,7 @@ class AppParameterTest extends TestCase
     public function testLaDateDeMiseAJourSuitLaModificationDeValeur(): void
     {
         $parameter = $this->parameter('1', 'integer');
-        $avant     = $parameter->getUpdatedAt();
+        $avant = $parameter->getUpdatedAt();
 
         $parameter->setParamValue('2');
 

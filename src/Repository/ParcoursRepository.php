@@ -15,14 +15,11 @@ class ParcoursRepository extends ServiceEntityRepository
         parent::__construct($registry, Parcours::class);
     }
 
-    /**
-     * parcours ordonné : IDs activités + stepOrder + isAvailable, triés par étape
-     * @return array<int, array{activityId: int, stepOrder: int, isAvailable: string}>
-     */
+    /** @return array<int, array{activityId: int, stepOrder: int, isAvailable: string, priority: int}> */
     public function findOrderedByUser(User $user): array
     {
         return $this->createQueryBuilder('p')
-            ->select('IDENTITY(p.activity) AS activityId', 'p.stepOrder', 'a.isAvailable')
+            ->select('IDENTITY(p.activity) AS activityId', 'p.stepOrder', 'a.isAvailable', 'p.priority')
             ->join('p.activity', 'a')
             ->where('p.user = :user')
             ->setParameter('user', $user)
@@ -32,9 +29,9 @@ class ParcoursRepository extends ServiceEntityRepository
     }
 
     /**
-     * nombre de students à chaque sphère à une étape donnée pour éviter attente
      * @param int[] $sphereIds
-     * @return array<int, int> [sphereId => count]
+     *
+     * @return array<int, int>
      */
     public function countStudentsPerSphereAtStep(array $sphereIds, int $step): array
     {

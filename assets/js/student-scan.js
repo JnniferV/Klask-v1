@@ -69,12 +69,23 @@ function extractToken(raw) {
 
 const QUEUE_KEY = "klask:scan-queue";
 
-function queueScan(token) {
-    const q = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
-    if (!q.some((e) => e.token === token)) {
-        q.push({ token });
-        localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+function readQueue() {
+    try {
+        return JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
+    } catch {
+        return [];
     }
+}
+
+function writeQueue(q) {
+    try {
+        localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+    } catch {}
+}
+
+function queueScan(token) {
+    const q = readQueue();
+    if (!q.some((e) => e.token === token)) writeQueue([...q, { token }]);
 }
 
 async function submitScan(token) {
@@ -90,7 +101,7 @@ async function submitScan(token) {
 }
 
 async function flushQueue() {
-    const q = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
+    const q = readQueue();
     if (!q.length) return;
     const remaining = [];
     for (const { token } of q) {
@@ -99,12 +110,12 @@ async function flushQueue() {
             if (data.ok) {
                 updateScores(data);
                 updateParcoursPin(data.activityId);
-            } else if (data.error !== "Déjà scanné.") remaining.push({ token });
+            }
         } catch {
             remaining.push({ token });
         }
     }
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
+    writeQueue(remaining);
 }
 
 window.addEventListener("online", flushQueue);
@@ -134,7 +145,7 @@ async function processToken(raw) {
             }, 2000);
         }
     } catch {
-        // Réseau indisponible : mise en file d'attente
+        // réseau indisponible : mise en file d'attente
         queueScan(token);
         setMsg(
             "Hors-ligne — scan enregistré, sera synchronisé à la reconnexion.",
@@ -153,7 +164,7 @@ function updateScores(data) {
 }
 
 function updateParcoursPin(activityId) {
-    // Délègue la MAJ DOM + flèche à map.js
+    // délègue la MAJ DOM + flèche à map.js
     window.dispatchEvent(
         new CustomEvent("klask:pinDone", { detail: { activityId } }),
     );
@@ -172,18 +183,3 @@ async function closeScanner() {
     }
     document.getElementById("scan-overlay")?.remove();
 }
-
-window.addEventListener("klask:poke", function () {
-    let notif = document.getElementById("poke-notif");
-    if (!notif) {
-        notif = document.createElement("div");
-        notif.id = "poke-notif";
-        notif.className = "poke-notif";
-        document.body.appendChild(notif);
-    }
-    notif.textContent = "COUCOU ! BOUGE TON BOUL !";
-    notif.hidden = false;
-    setTimeout(function () {
-        notif.hidden = true;
-    }, 6000);
-});

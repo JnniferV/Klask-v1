@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Tests\Repository;
 
 use App\Entity\Authority;
@@ -10,14 +11,14 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class AuthorityRepositoryTest extends KernelTestCase
 {
-    private ?EntityManagerInterface $entityManager;
+    private EntityManagerInterface $em;
     private AuthorityRepository $repository;
 
     protected function setUp(): void
     {
         self::bootKernel();
 
-        $this->entityManager = self::getContainer()->get('doctrine')->getManager();
+        $this->em = self::getContainer()->get('doctrine')->getManager();
         $this->repository = self::getContainer()->get(AuthorityRepository::class);
     }
 
@@ -25,16 +26,16 @@ class AuthorityRepositoryTest extends KernelTestCase
     {
         $role = new Role();
         $role->setNameRole('ROLE_TEST_ADMIN');
-        $this->entityManager->persist($role);
+        $this->em->persist($role);
 
         $authority = new Authority();
         $authority->setAuthorityUser('Accès Total');
-        $this->entityManager->persist($authority);
+        $this->em->persist($authority);
 
         $authorityRole = new AuthorityRole($authority, $role);
-        $this->entityManager->persist($authorityRole);
+        $this->em->persist($authorityRole);
 
-        $this->entityManager->flush();
+        $this->em->flush();
 
         $result = $this->repository->findByRole('ROLE_TEST_ADMIN');
 
@@ -49,10 +50,9 @@ class AuthorityRepositoryTest extends KernelTestCase
         $this->assertNull($result);
     }
 
-    protected function tearDown(): void
+    public function testGetByRoleLeveUneExceptionSiLeRoleNexistePas(): void
     {
-        parent::tearDown();
-        $this->entityManager->close();
-        $this->entityManager = null;
+        $this->expectException(\RuntimeException::class);
+        $this->repository->getByRole('ROLE_NON_EXISTANT');
     }
 }

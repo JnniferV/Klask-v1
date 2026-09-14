@@ -6,11 +6,16 @@ use App\Repository\GroupRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Entity(repositoryClass: GroupRepository::class)]
 #[ORM\Table(name: '`group`')]
+#[UniqueEntity(fields: ['code'], message: 'Ce code de groupe est déjà utilisé.')]
 class Group
 {
+    // source unique des niveaux, ordre des listes déroulantes
+    public const LEVELS = ['CM2', 'Sixième', 'Cinquième', 'Quatrième', 'Troisième', 'Seconde', 'Première', 'Terminale'];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -22,9 +27,8 @@ class Group
     #[ORM\Column(length: 50)]
     private string $color;
 
-    // Code unique auto-généré
     #[ORM\Column(length: 10, unique: true)]
-    private string $code;
+    private string $code = '';
 
     #[ORM\ManyToOne(inversedBy: 'groups')]
     #[ORM\JoinColumn(nullable: false)]
@@ -34,11 +38,9 @@ class Group
     #[ORM\JoinColumn(nullable: false)]
     private ?Event $event = null;
 
-    // Score total du groupe,màJ à chaque scan d'un membre
     #[ORM\Column(nullable: true)]
     private ?int $score = null;
 
-    //Maximum 40 élèves hors accompagnateurs, limite à revoir? 30?
     /**
      * @var Collection<int, User>
      */
@@ -96,6 +98,13 @@ class Group
         return $this->score;
     }
 
+    public function creditPoints(int $points): static
+    {
+        $this->score = ($this->score ?? 0) + $points;
+
+        return $this;
+    }
+
     public function setScore(?int $score): static
     {
         $this->score = $score;
@@ -105,7 +114,7 @@ class Group
 
     public function __toString(): string
     {
-        return $this->code . ($this->name ? ' — ' . $this->name : '');
+        return $this->code.($this->name ? ' — '.$this->name : '');
     }
 
     public function getEstablishment(): ?Establishment

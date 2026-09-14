@@ -12,9 +12,9 @@ use Doctrine\Persistence\ObjectManager;
 
 class AuthorityFixtures extends Fixture implements DependentFixtureInterface
 {
-    public const AUTHORITY_ADMIN_REFERENCE        = 'authority_admin';
+    public const AUTHORITY_ADMIN_REFERENCE = 'authority_admin';
     public const AUTHORITY_ACCOMPANYING_REFERENCE = 'authority_accompanying';
-    public const AUTHORITY_STUDENT_REFERENCE      = 'authority_student';
+    public const AUTHORITY_STUDENT_REFERENCE = 'authority_student';
 
     public function load(ObjectManager $manager): void
     {

@@ -6,6 +6,7 @@ use App\Entity\Activity;
 use App\Entity\User;
 use App\Repository\ScanRepository;
 use App\Tests\Support\DbFixture;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 class ScanRepositoryTest extends KernelTestCase
@@ -14,15 +15,17 @@ class ScanRepositoryTest extends KernelTestCase
     private DbFixture $fixture;
     private User $student;
     private Activity $stand;
+    private EntityManagerInterface $em;
 
     protected function setUp(): void
     {
         self::bootKernel();
 
+        $this->em = self::getContainer()->get('doctrine')->getManager();
         $this->repository = self::getContainer()->get(ScanRepository::class);
-        $this->fixture    = new DbFixture(self::getContainer()->get('doctrine')->getManager());
-        $this->student    = $this->fixture->student();
-        $this->stand      = $this->fixture->stand('token-scan-repo');
+        $this->fixture = new DbFixture($this->em);
+        $this->student = $this->fixture->student();
+        $this->stand = $this->fixture->stand('token-scan-repo');
     }
 
     public function testUnStandNonScanneNEstPasDetecte(): void
@@ -75,5 +78,30 @@ class ScanRepositoryTest extends KernelTestCase
             $this->repository->findLastAt($this->student)->getTimestamp(),
             5
         );
+    }
+
+    public function testLeTopDesActivitesEstTrieParNombreDeScans(): void
+    {
+        $autre = $this->fixture->stand('token-top-a', 30);
+        $this->fixture->scan($this->student, $this->stand);
+        $this->fixture->scan($this->fixture->student(), $this->stand);
+        $this->fixture->scan($this->student, $autre);
+
+        $top = $this->repository->findTopActivities(5);
+
+        $this->assertSame($this->stand->getName(), $top[0]['activity']);
+        $this->assertSame(2, (int) $top[0]['visits']);
+    }
+
+    public function testLeCompteurStageNeCompteQueLesScansSurStandsStage(): void
+    {
+        $this->stand->setIsInternship(true);
+        $this->em->flush();
+
+        $this->assertSame(0, $this->repository->countInternshipScans());
+
+        $this->fixture->scan($this->student, $this->stand);
+
+        $this->assertSame(1, $this->repository->countInternshipScans());
     }
 }

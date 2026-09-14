@@ -10,7 +10,7 @@ use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-//Crée un compte ADMIN et un compte ACCOMPANYING avec des mots de passe temporaires
+// crée un compte ADMIN et un compte ACCOMPANYING avec mots de passe temporaires
 class StaffUserFixtures extends Fixture implements DependentFixtureInterface
 {
     public function __construct(
@@ -28,7 +28,7 @@ class StaffUserFixtures extends Fixture implements DependentFixtureInterface
             $user->setEmail($email);
             $user->setAuthority($authority);
             $user->setPassword($this->hasher->hashPassword($user, $plainPassword));
-            if ($groupCode !== null) {
+            if (null !== $groupCode) {
                 $user->setGroup($manager->getRepository(Group::class)->findOneBy(['code' => $groupCode]));
             }
 
@@ -51,6 +51,8 @@ class StaffUserFixtures extends Fixture implements DependentFixtureInterface
         return [
             ['admin@klask.fr',          'AdminKlask2026!',  AuthorityFixtures::AUTHORITY_ADMIN_REFERENCE,         null],
             ['accompagnateur@klask.fr', 'AccKlask2026!',    AuthorityFixtures::AUTHORITY_ACCOMPANYING_REFERENCE,  'GRP0002'],
+            // compte de test pour valider le flux mot de passe oublié (réception réelle des mails)
+            ['jennv.contact@gmail.com', 'TestKlask2026!',   AuthorityFixtures::AUTHORITY_ACCOMPANYING_REFERENCE,  'GRP0003'],
         ];
     }
 }

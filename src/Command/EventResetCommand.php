@@ -11,8 +11,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-// cycle d'un event : s'ouvre à l'heure programmée (beginningHourEvent),se ferme à endHourEvent
-
+// cycle d'un event : s'ouvre à beginningHourEvent, se ferme à endHourEvent
+// exécution manuelle uniquement (php bin/console app:event-reset) suppression irréversible
 #[AsCommand(name: 'app:event-reset', description: 'Réinitialise les données élèves d\'un event à sa fermeture')]
 class EventResetCommand extends Command
 {
@@ -33,7 +33,7 @@ class EventResetCommand extends Command
     {
         $eventId = $input->getOption('event');
 
-        $events = $eventId !== null
+        $events = null !== $eventId
             ? array_filter([$this->eventRepository->find((int) $eventId)])
             : $this->eventRepository->findTerminatedNotReset();
 

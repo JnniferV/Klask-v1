@@ -79,7 +79,7 @@ class StudentLockTest extends FunctionalTestCase
 
         foreach (['/', '/login', '/inscription'] as $url) {
             $this->client->request('GET', $url);
-            $this->assertResponseRedirects('/map', null, $url . ' doit ramener vers la carte.');
+            $this->assertResponseRedirects('/map', null, $url.' doit ramener vers la carte.');
         }
     }
 }

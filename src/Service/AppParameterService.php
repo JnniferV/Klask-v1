@@ -14,18 +14,17 @@ class AppParameterService
     public function __construct(
         private readonly AppParameterRepository $repo,
         private readonly CacheInterface $cache,
-    ) {}
+    ) {
+    }
 
     public function getInt(string $key, int $default = 0): int
     {
-        return (int) ($this->load($key)?->getCastedValue() ?? $default);
+        return (int) ($this->load($key) ?? $default);
     }
 
     public function getBool(string $key, bool $default = false): bool
     {
-        $v = $this->load($key)?->getCastedValue();
-
-        return $v !== null ? (bool) $v : $default;
+        return (bool) ($this->load($key) ?? $default);
     }
 
     /** @return AppParameter[] */
@@ -36,15 +35,16 @@ class AppParameterService
 
     public function invalidate(string $key): void
     {
-        $this->cache->delete('app.param.' . $key);
+        $this->cache->delete('app.param.'.$key);
     }
 
-    private function load(string $key): ?AppParameter
+    // pas entité Doctrine
+    private function load(string $key): int|float|bool|string|null
     {
-        return $this->cache->get('app.param.' . $key, function (ItemInterface $item) use ($key): ?AppParameter {
+        return $this->cache->get('app.param.'.$key, function (ItemInterface $item) use ($key): int|float|bool|string|null {
             $item->expiresAfter(self::TTL);
 
-            return $this->repo->findOneBy(['paramKey' => $key]);
+            return $this->repo->findOneBy(['paramKey' => $key])?->getCastedValue();
         });
     }
 }

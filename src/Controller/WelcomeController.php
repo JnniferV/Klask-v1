@@ -10,7 +10,9 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class WelcomeController extends AbstractController
 {
-    public function __construct(private readonly UserService $userService) {}
+    public function __construct(private readonly UserService $userService)
+    {
+    }
 
     #[Route('/bienvenue', name: 'app_bienvenue', methods: ['GET'])]
     public function index(): Response

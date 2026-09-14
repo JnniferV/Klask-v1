@@ -27,10 +27,13 @@ services:
       # Hub en clair : le TLS est terminé par le service `proxy`, seule origine publique.
       # Pas de cors_origins à maintenir — le navigateur atteint le hub en same-origin.
       SERVER_NAME: ':80'
-      MERCURE_PUBLISHER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
-      MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
-    # Comment the following line to disable the development mode
-    command: /usr/bin/caddy run --config /etc/caddy/dev.Caddyfile
+      # Lue depuis .env (gitignoré) : DOIT rester identique à MERCURE_JWT_SECRET côté app,
+      # sinon le hub rejette les publications et les cookies d'abonné.
+      MERCURE_PUBLISHER_JWT_KEY: '${MERCURE_JWT_SECRET}'
+      MERCURE_SUBSCRIBER_JWT_KEY: '${MERCURE_JWT_SECRET}'
+    # PAS de dev.Caddyfile ici : il autorise les abonnés anonymes, donc l'écoute de
+    # group-score/<code> (pseudos, scores, sanctions d'élèves) par n'importe qui.
+    # Le mode par défaut exige un JWT d'abonné — posé en cookie par MapController.
     healthcheck:
       # http, pas https : le hub écoute en clair (SERVER_NAME ':80')
       test: ["CMD", "curl", "-f", "http://localhost/healthz"]
@@ -54,6 +57,7 @@ services:
     volumes:
       - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./public/certs:/etc/caddy/certs:ro
+      - ./public:/public:ro
     extra_hosts:
       # Permet d'atteindre le serveur Symfony qui tourne sur l'hôte
       - "host.docker.internal:host-gateway"

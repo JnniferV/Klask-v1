@@ -36,7 +36,7 @@ class QuestionnaireSaveTest extends FunctionalTestCase
             ->form();
 
         foreach ($notes as $letter => $note) {
-            $form['ratings[' . $letter . ']'] = (string) $note;
+            $form['ratings['.$letter.']'] = (string) $note;
         }
 
         return $form;
@@ -87,7 +87,7 @@ class QuestionnaireSaveTest extends FunctionalTestCase
     {
         $this->client->request('POST', '/questionnaire/save', [
             '_csrf_token' => 'jeton-falsifie',
-            'ratings'     => self::NOTES_VALIDES,
+            'ratings' => self::NOTES_VALIDES,
         ]);
 
         $this->assertResponseRedirects('/questionnaire');

@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{% block title %}Page d'accueil{% endblock %}</title>
-    <link rel="icon" href="{{ asset('images/favicon.png') }}">
-    <link rel="stylesheet" href="{{ asset('styles/fonts.css') }}">
+    <link rel="icon" type="image/webp" href="{{ asset('images/faviconklask.webp') }}">
+    {% block head_assets %}
+    <link rel="preload" href="{{ asset('fonts/open-sans-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ asset('styles/tokens.css') }}">
     <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+    {% endblock %}
     {% block stylesheets %}
     {% endblock %}
 
@@ -15,14 +18,13 @@
         <script type="module" src="{{ asset('js/shared_body.js') }}"></script>
     {% endblock %}
 </head>
-<body data-theme="standard">
-{% include 'structure/header.html.twig' %}
-{% include 'structure/shared_body.html.twig' %}
+{# thème SSR cookie #}
+<body class="{% block body_class %}page-textured{% endblock %}" data-theme="{{ app.request.cookies.get('klask-theme') == 'dark' ? 'dark' : 'standard' }}">
+{% block site_header %}{% include 'structure/header.html.twig' %}{% endblock %}
 
 <main>
     {% block body %}{% endblock %}
 </main>
-{% include 'structure/footer.html.twig' %}
-<script>if('serviceWorker' in navigator && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') navigator.serviceWorker.register('/sw.js');</script>
+{% block site_footer %}{% include 'structure/footer.html.twig' %}{% endblock %}
 </body>
 </html>

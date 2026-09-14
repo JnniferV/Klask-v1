@@ -4,6 +4,7 @@ namespace App\Tests\Service;
 
 use App\Service\RealtimeNotifier;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
 
@@ -15,18 +16,25 @@ class RealtimeNotifierTest extends TestCase
         $hub->expects($this->once())
             ->method('publish')
             ->with($this->callback(
-                fn(Update $update) => $update->getTopics() === ['map-update']
-                    && $update->getData() === '{"activityId":7}'
+                fn (Update $update) => $update->getTopics() === ['map-update']
+                    && '{"activityId":7}' === $update->getData()
             ));
 
-        $this->assertTrue((new RealtimeNotifier($hub))->publish('map-update', ['activityId' => 7]));
+        $notifier = new RealtimeNotifier($hub, $this->createStub(LoggerInterface::class));
+
+        $this->assertTrue($notifier->publish('map-update', ['activityId' => 7]));
     }
 
-    public function testUnHubIndisponibleNInterromptPasLActionEnCours(): void
+    public function testUnHubIndisponibleNInterromptPasLActionEnCoursEtEstJournalise(): void
     {
-        $hub = $this->createMock(HubInterface::class);
+        $hub = $this->createStub(HubInterface::class);
         $hub->method('publish')->willThrowException(new \RuntimeException('hub injoignable'));
 
-        $this->assertFalse((new RealtimeNotifier($hub))->publish('map-update', []));
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('error');
+
+        $notifier = new RealtimeNotifier($hub, $logger);
+
+        $this->assertFalse($notifier->publish('map-update', []));
     }
 }

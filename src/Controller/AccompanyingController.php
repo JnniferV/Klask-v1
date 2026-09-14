@@ -18,7 +18,8 @@ class AccompanyingController extends AbstractController
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly RealtimeNotifier $notifier,
-    ) {}
+    ) {
+    }
 
     #[Route('/accompanying/poke/{id}', name: 'app_accompanying_poke', methods: ['POST'])]
     public function poke(int $id, Request $request): JsonResponse
@@ -29,17 +30,17 @@ class AccompanyingController extends AbstractController
 
         $group = $this->currentGroup();
 
-        if ($group === null) {
+        if (null === $group) {
             return $this->json(['error' => 'Aucun groupe assigné.'], 400);
         }
 
-        $student = $this->userRepository->findOneBy(['id' => $id, 'group' => $group]);
+        $student = $this->userRepository->findStudentInGroup($id, $group);
 
-        if ($student === null) {
+        if (null === $student) {
             return $this->json(['error' => 'Élève introuvable dans votre groupe.'], 404);
         }
 
-        if (!$this->notifier->publish('poke/' . $student->getId(), ['poked' => true])) {
+        if (!$this->notifier->publish('poke/'.$student->getId(), ['poked' => true])) {
             return $this->json(['error' => 'Signal non envoyé : hub Mercure indisponible.'], 503);
         }
 

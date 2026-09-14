@@ -30,14 +30,16 @@ class MapPlacementController extends AbstractController
         private readonly ActivityRepository $activityRepository,
         private readonly ActivityCategoryRepository $activityCategoryRepository,
         private readonly RealtimeNotifier $notifier,
-    ) {}
+    ) {
+    }
 
     #[Route('/admin/placement/{type}/{id}', name: 'admin_map_placement', requirements: ['type' => 'sphere|activity'], methods: ['GET', 'POST'])]
     public function __invoke(Request $request, string $type, int $id): Response
     {
         $entity = match ($type) {
-            'sphere'   => $this->sphereRepository->find($id),
+            'sphere' => $this->sphereRepository->find($id),
             'activity' => $this->activityRepository->find($id),
+            default => null,
         };
 
         if (!$entity instanceof Sphere && !$entity instanceof Activity) {
@@ -45,8 +47,14 @@ class MapPlacementController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-            $x      = (float) $request->request->get('pointX', 50);
-            $y      = (float) $request->request->get('pointY', 50);
+            if (!$this->isCsrfTokenValid('admin_map_placement', (string) $request->request->get('_token'))) {
+                $this->addFlash('error', 'Jeton de sécurité invalide, veuillez réessayer.');
+
+                return $this->redirectToRoute('admin_map_placement', compact('type', 'id'));
+            }
+
+            $x = (float) $request->request->get('pointX', 50);
+            $y = (float) $request->request->get('pointY', 50);
             $radius = $entity instanceof Sphere ? (float) $request->request->get('radius', $entity->getRadius()) : null;
 
             $this->mapService->savePosition($entity, $x, $y, $radius);
@@ -58,7 +66,7 @@ class MapPlacementController extends AbstractController
             return $this->redirectToRoute('admin_map_placement', compact('type', 'id'));
         }
 
-        $crudController = $type === 'sphere' ? SphereCrudController::class : ActivityCrudController::class;
+        $crudController = 'sphere' === $type ? SphereCrudController::class : ActivityCrudController::class;
         $backUrl = $this->urlGenerator
             ->setController($crudController)
             ->setAction(Action::EDIT)
@@ -70,16 +78,16 @@ class MapPlacementController extends AbstractController
             : null;
 
         return $this->render('admin/placement.html.twig', [
-            'type'            => $type,
-            'id'              => $id,
-            'label'           => $entity->getName(),
-            'pointX'          => $entity->getPointX() ?? 50,
-            'pointY'          => $entity->getPointY() ?? 50,
-            'radius'          => $entity instanceof Sphere ? $entity->getRadius() : null,
+            'type' => $type,
+            'id' => $id,
+            'label' => $entity->getName(),
+            'pointX' => $entity->getPointX() ?? 50,
+            'pointY' => $entity->getPointY() ?? 50,
+            'radius' => $entity instanceof Sphere ? $entity->getRadius() : null,
             'suggestedBounds' => $suggestedBounds,
-            'backUrl'         => $backUrl,
-            'categories'      => $type === 'sphere' ? $this->activityCategoryRepository->findAll() : [],
-            'mapJson'         => $this->mapService->getPreparedSpheresJson(),
+            'backUrl' => $backUrl,
+            'categories' => 'sphere' === $type ? $this->activityCategoryRepository->findAll() : [],
+            'mapJson' => $this->mapService->getPreparedSpheresJson(),
         ]);
     }
 
@@ -87,7 +95,14 @@ class MapPlacementController extends AbstractController
     public function newActivityOnMap(Request $request): Response
     {
         $sphereId = (int) $request->request->get('sphereId');
-        $sphere   = $this->sphereRepository->find($sphereId);
+
+        if (!$this->isCsrfTokenValid('admin_activity_new_on_map', (string) $request->request->get('_token'))) {
+            $this->addFlash('error', 'Jeton de sécurité invalide, veuillez réessayer.');
+
+            return $this->redirectToRoute('admin_map_placement', ['type' => 'sphere', 'id' => $sphereId]);
+        }
+
+        $sphere = $this->sphereRepository->find($sphereId);
         $category = $this->activityCategoryRepository->find((int) $request->request->get('categoryId'));
 
         if (!$sphere || !$category) {
@@ -95,8 +110,16 @@ class MapPlacementController extends AbstractController
         }
 
         $name = trim((string) $request->request->get('name'));
-        if ($name === '') {
-            $this->addFlash('error', 'Le nom est obligatoire.');
+
+        $refus = match (true) {
+            '' === $name => 'Le nom est obligatoire.',
+            null !== $this->activityRepository->findOneBy(['name' => $name]) => sprintf('Une activité nommée « %s » existe déjà.', $name),
+            default => null,
+        };
+
+        if (null !== $refus) {
+            $this->addFlash('error', $refus);
+
             return $this->redirectToRoute('admin_map_placement', ['type' => 'sphere', 'id' => $sphereId]);
         }
 
@@ -104,7 +127,7 @@ class MapPlacementController extends AbstractController
             $sphere,
             $category,
             $name,
-            $request->request->get('description') ?: null,
+            $request->request->getString('description') ?: null,
             (float) $request->request->get('pointX', 50),
             (float) $request->request->get('pointY', 50),
         );
@@ -114,8 +137,7 @@ class MapPlacementController extends AbstractController
         $this->notifier->publish('map-update', [
             ...$this->mapService->activityToArray($activity),
             'action' => 'create',
-            'type'   => 'activity',
-            'color'  => $sphere->getColor(),
+            'type' => 'activity',
         ]);
 
         $this->addFlash('success', sprintf('Activité "%s" créée.', $activity->getName()));
@@ -123,20 +145,19 @@ class MapPlacementController extends AbstractController
         return $this->redirectToRoute('admin_map_placement', ['type' => 'sphere', 'id' => $sphereId]);
     }
 
-
     private function warnIfOverlap(Sphere|Activity $entity): void
     {
         $movedSphere = $entity instanceof Sphere ? $entity : $entity->getSphere();
-        if ($movedSphere === null) {
+        if (null === $movedSphere) {
             return;
         }
 
         $spheres = $this->sphereRepository->findAll();
-        $allIds  = array_map(fn(Sphere $s) => $s->getId(), $spheres);
+        $allIds = array_map(fn (Sphere $s) => (int) $s->getId(), $spheres);
         $grouped = $this->activityRepository->findStandsBySpheres($allIds);
 
         $movedBounds = SphereBoundsCalculator::fromStands($grouped[$movedSphere->getId()] ?? []);
-        if ($movedBounds === null) {
+        if (null === $movedBounds) {
             return;
         }
 
@@ -145,7 +166,7 @@ class MapPlacementController extends AbstractController
                 continue;
             }
             $otherBounds = SphereBoundsCalculator::fromStands($grouped[$other->getId()] ?? []);
-            if ($otherBounds !== null && SphereBoundsCalculator::overlap($movedBounds, $otherBounds)) {
+            if (null !== $otherBounds && SphereBoundsCalculator::overlap($movedBounds, $otherBounds)) {
                 $this->addFlash('warning', sprintf(
                     '⚠ La sphère "%s" chevauche "%s" — pensez à espacer les stands.',
                     $movedSphere->getName(),
@@ -155,27 +176,25 @@ class MapPlacementController extends AbstractController
         }
     }
 
-    /**
-     * Position déjà persistée : on relit l'entité, pas besoin de repasser les coordonnées
-     * @return array<string, mixed>
-     */
+    // position déjà persistée : on relit l'entité, pas besoin de repasser les coords
+    /** @return array<string, mixed> */
     private function buildMoveEvent(Sphere|Activity $entity): array
     {
         if ($entity instanceof Sphere) {
             return [
-                'action'  => 'move',
-                'type'    => 'sphere',
-                'id'      => $entity->getId(),
+                'action' => 'move',
+                'type' => 'sphere',
+                'id' => $entity->getId(),
                 'centerX' => $entity->getPointX(),
                 'centerY' => $entity->getPointY(),
-                'radius'  => $entity->getRadius(),
+                'radius' => $entity->getRadius(),
             ];
         }
 
         return [
             ...$this->mapService->activityToArray($entity),
             'action' => 'move',
-            'type'   => 'activity',
+            'type' => 'activity',
         ];
     }
 }

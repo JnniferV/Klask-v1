@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon bilan{% endblock %}
+
+{% block body %}
+<div class="hud-window">
+    <div class="hud-cap">
+        <h1>Mon bilan<span style="--len:{{ bilan.user.pseudo|length }}">{{ bilan.user.pseudo }}</span></h1>
+    </div>
+
+    <div class="hud-body">
+        <div class="welcome-score">
+            Score perso&nbsp;: <strong>{{ bilan.scorePerso }}</strong> pts
+        </div>
+
+        {% if bilan.group %}
+            <div class="welcome-score">
+                Score équipe ({{ bilan.group.name|default(bilan.group.code) }})&nbsp;: <strong>{{ bilan.scoreGroupe }}</strong> pts
+            </div>
+        {% endif %}
+
+        <h2>Mon parcours</h2>
+        {% if bilan.scans is empty %}
+            <p>Tu n'as pas encore visité de stands.</p>
+        {% else %}
+            <ul>
+                {% for scan in bilan.scans %}
+                    <li>
+                        <strong>{{ scan.activity.name }}</strong>
+                        {% if scan.activity.description %}<br>{{ scan.activity.description }}{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <div class="block-actions">
+            {% if bilan.isPdfUnlocked %}
+                <p>Parcours validé — tu peux télécharger ton bilan PDF.</p>
+                <a href="{{ path('app_bilan_eleve_pdf') }}" class="btn-continuer">Télécharger mon bilan PDF</a>
+            {% else %}
+                <p>PDF verrouillé : visite au moins 3 stands ou continue l'exploration pendant 1 heure.</p>
+                <button class="btn-continuer" disabled>Bilan indisponible</button>
+            {% endif %}
+        </div>
+
+        <p class="block-actions">
+            <a href="{{ path('app_map') }}">← Retour à la carte</a>
+        </p>
+    </div>
+
+    <div class="hud-cap hud-cap--bot"></div>
+</div>
+{% endblock %}

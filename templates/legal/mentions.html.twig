@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mentions légales{% endblock %}
+
+{% block body %}
+<div class="hud-window">
+    <div class="hud-cap">
+        <h1>Mentions légales</h1>
+    </div>
+
+    <div class="hud-body">
+        <h2>Éditeur</h2>
+        <p>
+            Klask, application du forum des métiers, éditée par [Nom de l'établissement ou de
+            l'organisateur] — [adresse postale] — [adresse e-mail de contact].
+            Directeur de la publication&nbsp;: [Nom].
+        </p>
+
+        <h2>Hébergement</h2>
+        <p>LWS — 10 rue Penthièvre, 75008 Paris — <a href="https://www.lws.fr" target="_blank" rel="noopener">lws.fr</a>.</p>
+
+        <h2>Données personnelles</h2>
+        <p>
+            L'application traite le strict nécessaire au déroulement de la journée&nbsp;:
+            un pseudonyme tiré au sort (animal + adjectif) pour les élèves, l'établissement,
+            la classe et le code de groupe, les réponses au questionnaire d'orientation,
+            les stands scannés et les points obtenus. Les accompagnateurs et administrateurs
+            fournissent en plus une adresse e-mail et un mot de passe, conservé sous forme
+            chiffrée. Aucun nom, prénom, numéro de téléphone ni donnée de géolocalisation
+            n'est collecté&nbsp;: un élève n'est pas identifiable depuis l'application.
+        </p>
+        <p>
+            Finalité&nbsp;: proposer un parcours de visite personnalisé, animer le forum en
+            temps réel et produire le bilan de fin de journée. Base légale&nbsp;: l'intérêt
+            légitime de l'organisateur à assurer le bon déroulement de l'événement.
+        </p>
+        <p>
+            Les données ne sont ni cédées, ni vendues, ni transmises à des tiers. Elles sont
+            hébergées en France et effacées à la clôture de l'événement, au plus tard
+            [durée, ex. 3 mois] après celui-ci.
+        </p>
+
+        <h2>Cookies et stockage local</h2>
+        <p>
+            Un cookie de session maintient la connexion, un second autorise la réception des
+            notifications en temps réel. Le navigateur mémorise également le thème choisi et
+            les notifications déjà fermées. Aucun cookie publicitaire ni outil de mesure
+            d'audience tiers n'est utilisé&nbsp;: aucun consentement préalable n'est requis.
+        </p>
+
+        <h2>Vos droits</h2>
+        <p>
+            Conformément au RGPD, vous disposez d'un droit d'accès, de rectification,
+            d'effacement et d'opposition. Adressez votre demande à [adresse e-mail de contact].
+            Vous pouvez introduire une réclamation auprès de la CNIL
+            (<a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>).
+            Pour un élève mineur, la demande est exercée par le représentant légal.
+        </p>
+
+        <h2>Propriété intellectuelle</h2>
+        <p>
+            Le nom Klask, les visuels, les avatars et le code de l'application sont protégés.
+            Toute reproduction sans autorisation écrite préalable est interdite.
+        </p>
+
+        <p class="block-actions">
+            <a href="{{ path('app_home') }}">← Retour</a>
+        </p>
+    </div>
+
+    <div class="hud-cap hud-cap--bot"></div>
+</div>
+{% endblock %}

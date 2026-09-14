@@ -1,4 +1,4 @@
-// Validation côté client du questionnaire : chaque note de 1 à 6 es unique
+// validation côté client du questionnaire : chaque note de 1 à 6 es unique
 const selects = [...document.querySelectorAll(".rating-select")];
 const errorEl = document.getElementById("quiz-error");
 
@@ -32,21 +32,21 @@ function refreshState() {
 
 selects.forEach((s) => s.addEventListener("change", refreshState));
 
-document.getElementById("quiz-form").addEventListener("submit", (e) => {
+const form = document.getElementById("quiz-form");
+const dialog = document.getElementById("quiz-confirm");
+
+form.addEventListener("submit", (e) => {
+    e.preventDefault();
     if (!isValid()) {
-        e.preventDefault();
         errorEl.textContent =
             getValues().length < 6
                 ? "Note toutes les affirmations avant de valider."
                 : "Utilise chaque chiffre de 1 à 6 une seule fois.";
         return;
     }
+    dialog.showModal();
+});
 
-    if (
-        !confirm(
-            "Es-tu sûr(e) de tes réponses ? Tu ne pourras plus revenir en arrière.",
-        )
-    ) {
-        e.preventDefault();
-    }
+dialog.addEventListener("close", () => {
+    if (dialog.returnValue === "ok") form.submit();
 });

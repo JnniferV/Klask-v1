@@ -21,12 +21,6 @@ class Sphere
     #[ORM\Column(length: 50, unique: true)]
     private string $color;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $icon = null;
-
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $description = null;
-
     #[ORM\Column(nullable: true)]
     private ?float $pointX = null;
 
@@ -77,30 +71,6 @@ class Sphere
     public function setColor(string $color): static
     {
         $this->color = $color;
-
-        return $this;
-    }
-
-    public function getIcon(): ?string
-    {
-        return $this->icon;
-    }
-
-    public function setIcon(?string $icon): static
-    {
-        $this->icon = $icon;
-
-        return $this;
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(?string $description): static
-    {
-        $this->description = $description;
 
         return $this;
     }

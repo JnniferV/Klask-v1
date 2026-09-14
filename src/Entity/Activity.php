@@ -6,8 +6,12 @@ use App\Repository\ActivityRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ActivityRepository::class)]
+#[UniqueEntity(fields: ['name'], message: 'Une activité porte déjà ce nom.')]
+#[Assert\Expression('not this.isStand() or this.getSphere()', message: 'Un Stand doit être rattaché à une sphère.')]
 class Activity
 {
     #[ORM\Id]
@@ -24,7 +28,6 @@ class Activity
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $qrcode = null;
 
-   //token secret encodé dans le QR code physique qui protège contre les soumissions de scans MANUELS
     #[ORM\Column(length: 255, unique: true, nullable: true)]
     private ?string $qrcodeToken = null;
 
@@ -49,15 +52,16 @@ class Activity
     #[ORM\Column(nullable: true)]
     private ?int $estimatedWaitMinutes = null;
 
+    // onDelete SET NULL
     #[ORM\ManyToOne(inversedBy: 'activities')]
-    #[ORM\JoinColumn(nullable: true)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
     private ?Sphere $sphere = null;
 
     #[ORM\ManyToOne(inversedBy: 'activities')]
     #[ORM\JoinColumn(nullable: false)]
     private ?ActivityCategory $category = null;
 
-    /** scans récents
+    /**
      * @var Collection<int, Scan>
      */
     #[ORM\OneToMany(targetEntity: Scan::class, mappedBy: 'activity')]

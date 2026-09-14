@@ -1,10 +1,19 @@
 {% extends 'base.html.twig' %}
 
+{% block head_assets %}
+    <link rel="stylesheet" href="{{ asset('styles/tokens.css') }}">
+    <link rel="stylesheet" href="{{ asset('styles/admin.css') }}">
+{% endblock %}
+
+{% block body_class %}{% endblock %}
+{% block site_header %}{% endblock %}
+{% block site_footer %}{% endblock %}
+
 {% block title %}Placer : {{ label }}{% endblock %}
 
-{% block stylesheets %}
-    {{ parent() }}
-    <link rel="stylesheet" href="{{ asset('styles/admin.css') }}">
+
+{% block javascripts %}
+<script type="module" src="{{ asset('js/admin-placement.js') }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -22,7 +31,7 @@
     {% endif %}
 
     <div class="placement-map-box" id="map-box">
-        <img src="{{ asset('images/carte-simple.svg') }}" alt="Plan" draggable="false">
+        <img src="{{ asset('images/cartes claire.webp') }}" alt="Plan" draggable="false">
         <div class="placement-layer" id="ghosts"></div>
         <div class="placement-marker {{ type == 'sphere' ? 'sphere' : 'pin' }}" id="marker"></div>
         {% if type == 'sphere' %}
@@ -31,6 +40,7 @@
     </div>
 
     <form method="post" class="placement-form">
+        <input type="hidden" name="_token" value="{{ csrf_token('admin_map_placement') }}">
         <label>X (%) <input type="number" step="0.01" name="pointX" id="pointX" value="{{ pointX }}" required></label>
         <label>Y (%) <input type="number" step="0.01" name="pointY" id="pointY" value="{{ pointY }}" required></label>
         {% if radius is not null %}
@@ -45,6 +55,7 @@
 
     {% if type == 'sphere' and categories is not empty %}
     <form id="activity-form" class="act-form" action="{{ path('admin_activity_new_on_map') }}" method="post" style="display:none">
+        <input type="hidden" name="_token" value="{{ csrf_token('admin_activity_new_on_map') }}">
         <input type="hidden" name="sphereId" value="{{ id }}">
         <input type="hidden" name="pointX" id="act-x">
         <input type="hidden" name="pointY" id="act-y">
@@ -66,5 +77,4 @@
 
 <script type="application/json" id="map-data">{{ mapJson|raw }}</script>
 <script type="application/json" id="placement-config">{{- { type: type, sphereId: id, suggestedBounds: suggestedBounds }|json_encode|raw -}}</script>
-<script type="module" src="{{ asset('js/admin-placement.js') }}"></script>
 {% endblock %}

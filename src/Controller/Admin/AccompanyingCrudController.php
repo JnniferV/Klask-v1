@@ -15,16 +15,24 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
+/** @extends AbstractCrudController<User> */
 class AccompanyingCrudController extends AbstractCrudController
 {
     public function __construct(
         private readonly AuthorityRepository $authorityRepository,
         private readonly UserPasswordHasherInterface $hasher,
-    ) {}
+    ) {
+    }
 
-    public static function getEntityFqcn(): string { return User::class; }
+    public static function getEntityFqcn(): string
+    {
+        return User::class;
+    }
 
     public function configureCrud(Crud $crud): Crud
     {
@@ -38,10 +46,15 @@ class AccompanyingCrudController extends AbstractCrudController
     {
         yield TextField::new('pseudo', 'Nom');
         yield TextField::new('email', 'Email');
-        // Le groupe est la seule source pour poke et les scores temps réel
+        // le groupe est la seule source pour poke et les scores temps réel
         yield AssociationField::new('group', 'Groupe');
-        if ($pageName === Crud::PAGE_NEW) {
-            yield TextField::new('password', 'Mot de passe temporaire');
+        if (Crud::PAGE_NEW === $pageName) {
+            yield TextField::new('password', 'Mot de passe temporaire')
+                ->setFormType(PasswordType::class)
+                ->setFormTypeOption('constraints', [
+                    new NotBlank(message: 'Veuillez saisir un mot de passe.'),
+                    new Length(min: 12, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.', max: 4096),
+                ]);
         }
     }
 
@@ -56,15 +69,15 @@ class AccompanyingCrudController extends AbstractCrudController
     public function createEntity(string $entityFqcn): User
     {
         $user = new User();
-        $user->setAuthority($this->authorityRepository->findByRole(RoleSecurity::ACCOMPANYING->value));
+        $user->setAuthority($this->authorityRepository->getByRole(RoleSecurity::ACCOMPANYING->value));
 
         return $user;
     }
 
     public function persistEntity(EntityManagerInterface $em, $entityInstance): void
     {
-        /** @var User $entityInstance */
-        $plain = $entityInstance->getPassword() ?: 'TempKlask2026!';
+        
+        $plain = $entityInstance->getPassword() ?? throw new \LogicException('Mot de passe requis.');
         $entityInstance->setPassword($this->hasher->hashPassword($entityInstance, $plain));
         parent::persistEntity($em, $entityInstance);
     }

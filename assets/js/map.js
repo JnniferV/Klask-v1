@@ -6,11 +6,12 @@ const BUBBLE = document.getElementById("activity-bubble");
 const BUBNAME = document.getElementById("bubble-name");
 const BUBDESC = document.getElementById("bubble-desc");
 const BUBWAIT = document.getElementById("bubble-wait");
+const BUBPTS = document.getElementById("bubble-points");
 const TOP_SPHERES = new Set(BOOT.topSpheres ?? []);
 const BOTTOM_SPHERES = new Set(BOOT.bottomSpheres ?? []);
 const PARCOURS = BOOT.parcours ?? [];
 const PARCOURS_MAP = new Map(PARCOURS.map((p) => [p.id, p]));
-// toutes les activités scannées, parcours ou non (stands, ateliers, conférences, professions)
+// toutes les activités scannées
 const SCANNED = new Set(BOOT.scanned ?? []);
 
 const sphereStyle = (color, s) =>
@@ -28,11 +29,16 @@ function createSphere(sphere) {
     el.className = "sphere-zone" + cls;
     el.dataset.activityIds = sphere.activities.map((a) => a.id).join(",");
     el.style.cssText = sphereStyle(sphere.color, sphere);
-    el.innerHTML = `<span class="sphere-label">${sphere.name}</span>`;
+    el.append(
+        Object.assign(document.createElement("span"), {
+            className: "sphere-label",
+            textContent: sphere.name,
+        }),
+    );
     return el;
 }
 
-// Position + état d'un pin : partagé entre la création et la mise à jour temps réel
+// position + état d'un pin : partagé entre la création et la mise à jour temps réel
 function applyActivity(el, a) {
     el.style.left = a.pointXActivity + "%";
     el.style.top = a.pointYActivity + "%";
@@ -41,6 +47,9 @@ function applyActivity(el, a) {
     el.dataset.avail = a.isAvailable ? "1" : "0";
     el.dataset.wait = a.waitMinutes ?? "";
     el.dataset.cap = a.capacity ?? "ok";
+    el.dataset.sphereId = a.sphereId ?? "";
+    el.dataset.category = a.categoryType ?? "";
+    el.dataset.basePoints = a.basePoints ?? 0;
     el.setAttribute("aria-label", a.name);
     el.classList.toggle("unavailable", !a.isAvailable);
     el.classList.toggle("cap-full", a.capacity === "full");
@@ -70,7 +79,7 @@ function createPin(activity, color) {
 let coordsMap = new Map();
 // ID de l'activité urgente (atelier/conf) reçue via Mercure
 let urgentActivityId = null;
-// Id du dernier scan validé, mis à jour à chaque scan
+// id du dernier scan validé mis à jour à chaque scan
 let lastScannedId = BOOT.scanned?.[0] ?? null;
 
 // score max possible
@@ -87,7 +96,7 @@ function congratsIfMaxScore() {
     return true;
 }
 
-// Lecture du JSON embarqué dans le HTML
+// lecture du JSON embarqué dans le HTML
 function loadMap() {
     try {
         const mapData = BOOT.mapData;
@@ -99,7 +108,7 @@ function loadMap() {
 
         for (const sphere of spheres) {
             const sphereEl = createSphere(sphere);
-            // Tagger la zone sphère selon l'état du parcours
+            // tagger la zone sphère selon l'état du parcours
             const steps = sphere.activities
                 .map((a) => PARCOURS_MAP.get(a.id))
                 .filter(Boolean);
@@ -151,13 +160,13 @@ function loadMap() {
     }
 }
 
-// flèche de la dernière sphère validée vers la prochaine
+// flèche de la dernière sphère validé vers la prochaine
 function renderParcoursPath(coordsMap) {
     const lastDoneIdx = PARCOURS.reduce((acc, p, i) => (p.done ? i : acc), -1);
     const currentIdx = PARCOURS.findIndex((p) => p.current);
     if (currentIdx === -1) return;
 
-    // Mode urgent
+    // mode urgent
     const urgentStep =
         urgentActivityId === null
             ? PARCOURS.find((p) => p.urgent && !p.done)
@@ -205,7 +214,7 @@ function renderParcoursPath(coordsMap) {
     defs.appendChild(marker);
     svg.appendChild(defs);
 
-    // Ligne de la fleche
+    // ligne de la fleche
     [["neon-glow"], ["neon-beam"]].forEach(([cls]) => {
         const line = document.createElementNS(
             "http://www.w3.org/2000/svg",
@@ -226,7 +235,7 @@ function renderParcoursPath(coordsMap) {
 
 // mise à jour de l'état parcours
 window.addEventListener("klask:pinDone", ({ detail: { activityId } }) => {
-    // Toujours mémoriser le dernier scan comme début de la flèche
+    // toujours mémoriser le dernier scan comme début de la flèche
     lastScannedId = activityId;
     SCANNED.add(activityId);
     if (activityId === urgentActivityId) urgentActivityId = null;
@@ -278,7 +287,7 @@ window.addEventListener("klask:pinDone", ({ detail: { activityId } }) => {
         );
     }
 
-    // Re-render flèche depuis le dernier scan
+    // re-render flèche depuis le dernier scan
     document.querySelector(".parcours-layer")?.remove();
     if (PARCOURS.some((p) => p.current)) {
         renderParcoursPath(coordsMap);
@@ -294,12 +303,46 @@ window.addEventListener("klask:pinDone", ({ detail: { activityId } }) => {
     }
 });
 
-function showBanner(text, cls = "", ttl = 0) {
+const ALERT_BANNER_ID = "alert-map-banner";
+
+// bannières déjà fermées
+const DISMISSED_KEY = "klask:notifs-fermees";
+let dismissed = new Set();
+try {
+    dismissed = new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY)) ?? []);
+} catch {}
+
+function dismiss(el, id) {
+    el.remove();
+    if (!id) return;
+    dismissed.add(id);
+    try {
+        localStorage.setItem(
+            DISMISSED_KEY,
+            JSON.stringify([...dismissed].slice(-50)),
+        );
+    } catch {}
+}
+
+// croix de fermeture pour notif
+function closeButton(onClose) {
+    const b = Object.assign(document.createElement("button"), {
+        type: "button",
+        className: "notif-close",
+        textContent: "✕",
+    });
+    b.setAttribute("aria-label", "Fermer");
+    b.addEventListener("click", onClose);
+    return b;
+}
+
+function showBanner(text, cls = "", id = "") {
     const el = document.createElement("div");
     el.className = "event-alert-banner" + (cls ? " " + cls : "");
     el.textContent = text;
+    if (id) el.id = id;
+    else el.prepend(closeButton(() => el.remove()));
     document.body.appendChild(el);
-    if (ttl) setTimeout(() => el.remove(), ttl);
 }
 
 // alerte event (Atelier/Conf dans n min) ou notif admin (titre, lien, type)
@@ -307,14 +350,18 @@ function showEventAlert(data) {
     if (data.categoryType) {
         showBanner(
             `⚡ ${data.categoryType} « ${data.activityName} » dans ${data.minutesBefore} min`,
-            "",
-            8000,
         );
         return;
     }
+    const domId = data.id ? "notif-" + data.id : "";
+    if (domId && (dismissed.has(data.id) || document.getElementById(domId)))
+        return;
+
     const el = document.createElement("div");
-    el.className = "event-alert-banner notif-" + (data.type ?? "info");
-    if (data.color) el.style.background = data.color;
+    el.className =
+        "event-alert-banner event-alert-banner--centered notif-" +
+        (data.type ?? "info");
+    if (domId) el.id = domId;
     if (data.title)
         el.append(
             Object.assign(document.createElement("strong"), {
@@ -332,36 +379,55 @@ function showEventAlert(data) {
                 rel: "noopener",
             }),
         );
+    el.prepend(closeButton(() => dismiss(el, data.id)));
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 10000);
+}
+
+let alertActive = false;
+
+// la carte existe en thème clair/sombre et mode alerte
+function applyPlan() {
+    const img = document.getElementById("map-plan");
+    const theme = document.body.dataset.theme === "dark" ? "dark" : "light";
+    const next = img?.dataset[theme + (alertActive ? "Alert" : "")];
+    if (!next || img.getAttribute("src") === next) return;
+    img.onload = () => {
+        window.dispatchEvent(new Event("klask:mapRefit"));
+        img.onload = null;
+    };
+    img.src = next;
 }
 
 function setAlertMap(active) {
-    const img = document.getElementById("map-plan");
-    if (img) {
-        const next = active ? img.dataset.srcAlert : img.dataset.srcNormal;
-        if (img.getAttribute("src") !== next) {
-            img.onload = () => {
-                window.dispatchEvent(new Event("klask:mapRefit"));
-                img.onload = null;
-            };
-            img.src = next;
-        }
-    }
+    alertActive = active;
+    applyPlan();
     OVERLAY.hidden = active;
     document.getElementById("btn-scan")?.toggleAttribute("hidden", active);
-    if (active) showBanner("🚨 Mode alerte — sorties de secours", "", 0);
-    else document.querySelector(".event-alert-banner")?.remove();
+
+    document.getElementById(ALERT_BANNER_ID)?.remove();
+    if (active)
+        showBanner("🚨 Mode alerte — sorties de secours", "", ALERT_BANNER_ID);
 }
 
-if (BOOT.alertMapActive) setAlertMap(true);
+setAlertMap(BOOT.alertMapActive);
+addEventListener("klask:theme", applyPlan);
 
-// Notif publiée avant l'ouverture de la page (Mercure ne la rejoue pas)
-if (BOOT.notification) showEventAlert(BOOT.notification);
+const replayNotifications = () =>
+    fetch(BOOT.notificationsUrl, { headers: { Accept: "application/json" } })
+        .then((r) => (r.ok ? r.json() : []))
+        .then((list) => list.forEach(showEventAlert))
+        .catch(() => {});
 
-// Mise à jour temps réel via Mercure
+replayNotifications();
+
+// mise à jour temps réel via Mercure
 function handleMapUpdate(e) {
-    const data = JSON.parse(e.data);
+    let data;
+    try {
+        data = JSON.parse(e.data);
+    } catch {
+        return;
+    }
 
     if (data.type === "alert-map") {
         setAlertMap(data.active);
@@ -380,11 +446,29 @@ function handleMapUpdate(e) {
     }
 
     if (data.poked) {
-        window.dispatchEvent(new Event("klask:poke"));
+        showPokeNotif();
         return;
     }
 
-    if (data.studentScore !== undefined) {
+    if (data.newStudent) {
+        window.dispatchEvent(
+            new CustomEvent("klask:newStudent", { detail: data.newStudent }),
+        );
+        return;
+    }
+
+    // total du groupe avec scan d'un coéquipier MàJ la sidebar de tout le groupe
+    if (data.groupScore !== undefined) {
+        const el = document.getElementById("score-groupe");
+        if (el) el.textContent = data.groupScore;
+        return;
+    }
+
+    if (
+        data.studentScore !== undefined ||
+        data.blocked !== undefined ||
+        data.reason
+    ) {
         window.dispatchEvent(
             new CustomEvent("klask:studentScore", { detail: data }),
         );
@@ -404,13 +488,23 @@ function handleMapUpdate(e) {
     }
 
     if (data.type === "activity") {
-        // create = nouveau pin ou move/update = même payload complet
-        if (data.action === "create") {
-            OVERLAY.appendChild(createPin(data, data.color));
-        } else {
-            const pin = document.getElementById("pin-" + data.id);
-            if (pin) applyActivity(pin, data);
+        const pin = document.getElementById("pin-" + data.id);
+
+        if (data.action === "delete") {
+            pin?.remove();
+            coordsMap.delete(data.id);
+            BUBBLE.hidden = true; // la bulle peut décrire le pin supprimé
+            // la flèche pointait peut-être dessus
+            if (PARCOURS_MAP.has(data.id)) {
+                document.querySelector(".parcours-layer")?.remove();
+                renderParcoursPath(coordsMap);
+            }
+            return;
         }
+
+        // id inconnu : création, id connu : mise à jour
+        if (pin) applyActivity(pin, data);
+        else OVERLAY.appendChild(createPin(data, data.color));
         coordsMap.set(data.id, {
             x: data.pointXActivity,
             y: data.pointYActivity,
@@ -418,29 +512,39 @@ function handleMapUpdate(e) {
     }
 }
 
-// Bulle d'activité -> positionnée à côté du pin cliqué
+// hors de .map-canvas : son transform ferait viser le canvas et non l'écran
+// mobile : bandeau bas en CSS, desktop : ancrée au pin en coordonnées écran
 function positionBubble(pin) {
-    // Coordonnées locales du canvas (indépendantes du zoom/pan)
-    const cW = OVERLAY.offsetWidth;
-    const cH = OVERLAY.offsetHeight;
-    const pinLeft = (parseFloat(pin.style.left) / 100) * cW;
-    const pinTop = (parseFloat(pin.style.top) / 100) * cH;
-    const pinHalf = pin.offsetWidth / 2;
-
-    // Rendre visible hors-écran pour mesurer la bulle
-    BUBBLE.style.cssText = "left:-9999px;top:0;transform:none;bottom:auto";
+    BUBBLE.style.cssText = "";
     BUBBLE.hidden = false;
+    if (getComputedStyle(BUBBLE).getPropertyValue("--anchored").trim() !== "1")
+        return;
 
-    const bubW = BUBBLE.offsetWidth;
-    const bubH = BUBBLE.offsetHeight;
+    const p = pin.getBoundingClientRect();
+    const w = BUBBLE.offsetWidth;
+    const h = BUBBLE.offsetHeight;
+    // 25px = pointe de la flèche, alignée sur le pin
+    const left = Math.min(
+        Math.max(8, p.left + p.width / 2 - 25),
+        innerWidth - w - 8,
+    );
+    const above = p.top - h - 12;
+    const top = Math.min(
+        Math.max(8, above >= 8 ? above : p.bottom + 12),
+        innerHeight - h - 8,
+    );
 
-    let left = pinLeft + pinHalf + 10;
-    if (left + bubW > cW) left = pinLeft - pinHalf - bubW - 10;
+    BUBBLE.style.cssText = `left:${left}px;top:${top}px`;
+}
 
-    let top = pinTop - bubH / 2;
-    top = Math.max(4, Math.min(top, cH - bubH - 4));
-
-    BUBBLE.style.cssText = `left:${left}px;top:${top}px;transform:none;bottom:auto`;
+//un stand hors des 3 sphères préférées rapporte moins
+function pinPoints(pin) {
+    const sphereId = +pin.dataset.sphereId;
+    return pin.dataset.category === "Stand" &&
+        sphereId &&
+        !TOP_SPHERES.has(sphereId)
+        ? BOOT.pointsOutsideTop3
+        : +pin.dataset.basePoints || 0;
 }
 
 OVERLAY.addEventListener("click", (e) => {
@@ -451,6 +555,11 @@ OVERLAY.addEventListener("click", (e) => {
 
     BUBNAME.textContent = pin.dataset.name;
     BUBDESC.textContent = pin.dataset.desc;
+    if (BUBPTS) {
+        const pts = pinPoints(pin);
+        BUBPTS.textContent = pts ? pts + " pts" : "";
+        BUBPTS.hidden = !pts;
+    }
     BUBWAIT.textContent =
         pin.dataset.avail !== "1"
             ? "Stand indisponible pour le moment."
@@ -464,6 +573,8 @@ OVERLAY.addEventListener("click", (e) => {
     positionBubble(pin);
 });
 
+BUBBLE.addEventListener("click", (e) => e.stopPropagation());
+
 document.getElementById("btn-close-bubble")?.addEventListener("click", (e) => {
     e.stopPropagation();
     BUBBLE.hidden = true;
@@ -473,29 +584,27 @@ document.addEventListener("click", () => {
     BUBBLE.hidden = true;
 });
 
-// Instructions — chargées à la demande (intro 1re visite ou clic ?)
-function loadInstructionImage(container) {
-    if (!container || container.querySelector(".intro-img")) return;
-    const raw = document.getElementById("instruction-image-url");
-    if (!raw) return;
-    const url = JSON.parse(raw.textContent);
-    if (!url) return;
-    const img = document.createElement("img");
-    img.className = "intro-img";
-    img.alt = "Instructions";
-    img.decoding = "async";
-    img.src = url;
-    container.appendChild(img);
+function showPokeNotif() {
+    if (!document.getElementById("btn-scan")) return;
+    let notif = document.getElementById("poke-notif");
+    if (!notif) {
+        notif = document.createElement("div");
+        notif.id = "poke-notif";
+        notif.className = "poke-notif";
+        const close = closeButton(() => (notif.hidden = true));
+        const msg = document.createElement("p");
+        msg.className = "poke-notif__msg";
+        msg.textContent =
+            "Votre accompagnateur a remarqué que vous étiez inactif ou que vous avez scanné trop et trop vite. Si vous avez des questions, n'hésitez pas à venir nous les poser. Team Klask";
+        notif.append(close, msg);
+        document.body.appendChild(notif);
+    }
+    notif.hidden = false;
 }
-
-loadInstructionImage(
-    document.querySelector("#intro-overlay [data-instruction-scroll]"),
-);
 
 const helpModal = document.getElementById("help-modal");
 
 document.getElementById("btn-help")?.addEventListener("click", () => {
-    loadInstructionImage(helpModal?.querySelector("[data-instruction-scroll]"));
     helpModal.hidden = false;
 });
 
@@ -515,7 +624,7 @@ document
         });
     });
 
-// Pan + Zoom
+// pan + Zoom
 (function initPanZoom() {
     const area = document.querySelector(".map-area");
     const canvas = document.querySelector(".map-canvas");
@@ -538,12 +647,17 @@ document
         touchOriginTx = 0,
         touchOriginTy = 0;
 
+    // cadre réellement dessiné dans le webp du plan : le reste est de la marge blanche
+    // (mesuré sur `cartes claire.webp` — x 18,7-81,2 %, y 12,1-94,3 %)
+    const PLAN = { x: 0.187, y: 0.121, w: 0.625, h: 0.822 };
+
     function computeMinScale() {
         if (!canvas.offsetHeight) return 0.3;
-        return Math.min(
-            area.clientWidth / canvas.offsetWidth,
-            area.clientHeight / canvas.offsetHeight,
-        );
+        const sx = area.clientWidth / (canvas.offsetWidth * PLAN.w),
+            sy = area.clientHeight / (canvas.offsetHeight * PLAN.h);
+        // mobile : le plan remplit l'écran (aucun vide) ; à partir de 768px il tient en entier,
+        // l'écran étant paysage et le plan portrait
+        return area.clientWidth < 768 ? Math.max(sx, sy) : Math.min(sx, sy);
     }
 
     function clampPan() {
@@ -566,8 +680,9 @@ document
     function initFit() {
         SCALE_MIN = computeMinScale();
         scale = SCALE_MIN;
-        tx = 0;
-        ty = 0;
+        // centré sur le plan, pas sur l'image : sinon la marge blanche entre dans le cadrage
+        tx = area.clientWidth / 2 - (PLAN.x + PLAN.w / 2) * canvas.offsetWidth * scale;
+        ty = area.clientHeight / 2 - (PLAN.y + PLAN.h / 2) * canvas.offsetHeight * scale;
         clampPan();
         applyTransform();
     }
@@ -584,7 +699,7 @@ document
         applyTransform();
     });
 
-    // Zoom molette
+    // zoom molette
     area.addEventListener(
         "wheel",
         (e) => {
@@ -605,7 +720,7 @@ document
         { passive: false },
     );
 
-    // Pan souris
+    // pan souris
     area.addEventListener("mousedown", (e) => {
         if (
             e.target.closest(
@@ -630,7 +745,7 @@ document
         dragging = false;
     });
 
-    // Pan + zoom touch (pinch)
+    // pan + zoom touch (pinch)
     area.addEventListener(
         "touchstart",
         (e) => {
@@ -696,7 +811,7 @@ document
 // init
 loadMap();
 
-// Sidebar toggle
+// sidebar toggle
 const _sidebar = document.getElementById("sidebar-panel");
 const _trigger = document.getElementById("sidebar-trigger-zone");
 if (_sidebar && _trigger) {
@@ -735,37 +850,30 @@ if (document.querySelector(".map-wrapper[data-student]")) {
     );
 }
 
-// Pour mercure et reco forcée
-(window.requestIdleCallback ?? ((fn) => setTimeout(fn, 0)))(
-    () => {
-        if (!BOOT.mercureUrl) return;
+if (BOOT.mercureUrl) {
+    let es;
 
-        const STALE_AFTER_MS = 45000;
-        let es, lastActivity;
-
-        function connect() {
-            try {
-                es?.close();
-                lastActivity = Date.now();
-                es = new EventSource(BOOT.mercureUrl);
-                es.onopen = () => {
-                    lastActivity = Date.now();
-                };
-                es.addEventListener("message", (e) => {
-                    lastActivity = Date.now();
-                    handleMapUpdate(e);
-                });
-                es.onerror = () =>
-                    console.warn("Mercure: reconnexion automatique…");
-            } catch (err) {
-                console.warn("Mercure:", err);
-            }
+    function connect() {
+        try {
+            es?.close();
+            es = new EventSource(BOOT.mercureUrl, { withCredentials: true });
+            es.addEventListener("message", handleMapUpdate);
+            es.onerror = () =>
+                console.warn("Mercure: reconnexion automatique…");
+        } catch (err) {
+            console.warn("Mercure:", err);
         }
+    }
 
-        connect();
-        setInterval(() => {
-            if (Date.now() - lastActivity > STALE_AFTER_MS) connect();
-        }, 15000);
-    },
-    { timeout: 2000 },
-);
+    connect();
+
+    setInterval(() => {
+        if (es?.readyState === EventSource.CLOSED) connect();
+    }, 15000);
+
+    addEventListener("visibilitychange", () => {
+        if (document.hidden) return;
+        if (es?.readyState === EventSource.CLOSED) connect();
+        replayNotifications();
+    });
+}

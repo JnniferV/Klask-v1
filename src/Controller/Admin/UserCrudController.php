@@ -22,12 +22,14 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\IntegerField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\EntityFilter;
 
+/** @extends AbstractCrudController<User> */
 class UserCrudController extends AbstractCrudController
 {
     public function __construct(
         private readonly InscriptionService $inscriptionService,
         private readonly AuthorityRepository $authorityRepository,
-    ) {}
+    ) {
+    }
 
     public static function getEntityFqcn(): string
     {
@@ -47,7 +49,7 @@ class UserCrudController extends AbstractCrudController
     {
         yield TextField::new('pseudo', 'Pseudo')->hideWhenUpdating();
         yield AssociationField::new('group', 'Groupe');
-        // Déduit du groupe : lecture seule, jointure faite dans createIndexQueryBuilder
+
         yield TextField::new('group.establishment.name', 'Établissement')->hideOnForm();
         yield AssociationField::new('authority', 'Rôle')->hideOnIndex()->hideWhenUpdating();
         yield IntegerField::new('invalidScanCount', 'Scans invalides')->hideOnForm();
@@ -68,7 +70,6 @@ class UserCrudController extends AbstractCrudController
 
     public function createIndexQueryBuilder(SearchDto $searchDto, EntityDto $entityDto, FieldCollection $fields, FilterCollection $filters): QueryBuilder
     {
-        // addSelect sur groupe + établissement : la colonne Établissement ne coûte aucune requête par ligne
         return parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters)
             ->join('entity.authority', 'a')
             ->leftJoin('entity.group', 'grp')->addSelect('grp')
@@ -81,7 +82,7 @@ class UserCrudController extends AbstractCrudController
     {
         $user = new User();
         $user->setPseudo($this->inscriptionService->generateUniquePseudo());
-        $user->setAuthority($this->authorityRepository->findByRole(RoleSecurity::STUDENT->value));
+        $user->setAuthority($this->authorityRepository->getByRole(RoleSecurity::STUDENT->value));
 
         return $user;
     }

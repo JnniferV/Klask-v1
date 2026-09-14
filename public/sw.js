@@ -1,7 +1,7 @@
 // Service Worker Klask — cache statique runtime
-const CACHE = "klask-v2";
+const CACHE = "klask-v6";
 
-// Extensions statiques à cacher (même origine)
+// extensions statiques à cacher (même origine)
 const STATIC_RE = /\.(js|css|svg|webp|png|woff2|ico)(\?.*)?$/;
 
 self.addEventListener("install", () => self.skipWaiting());
@@ -27,7 +27,7 @@ self.addEventListener("fetch", (e) => {
 
     const url = new URL(request.url);
 
-    // Statiques même origine (JS/CSS/SVG/fonts/images) — cache-first
+    // statiques même origine (JS/CSS/SVG/fonts/images) — cache-first
     if (url.origin === self.location.origin && STATIC_RE.test(url.pathname)) {
         e.respondWith(
             caches
@@ -37,12 +37,15 @@ self.addEventListener("fetch", (e) => {
         return;
     }
 
-    // Ne pas interférer avec /scan, /map HTML, Mercure SSE, etc.
+    // ne pas interférer avec /scan, /map HTML, Mercure SSE, etc
 });
 
 function fetchAndCache(request) {
     return fetch(request).then((r) => {
-        if (r.ok) caches.open(CACHE).then((c) => c.put(request, r.clone()));
+        if (r.ok) {
+            const copie = r.clone();
+            caches.open(CACHE).then((c) => c.put(request, copie));
+        }
         return r;
     });
 }

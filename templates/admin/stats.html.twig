@@ -2,12 +2,20 @@
 
 {% block page_title %}Statistiques{% endblock %}
 
+{% block page_actions %}
+    <a href="{{ path('admin_stats') }}" class="btn btn-secondary">
+        <i class="fa fa-refresh"></i> Actualiser (HTML)
+    </a>
+    <a href="{{ path('admin_stats_pdf') }}" class="btn btn-primary">
+        <i class="fa fa-file-pdf-o"></i> Exporter en PDF
+    </a>
+{% endblock %}
+
 {% block main %}
 <div class="row g-4">
 
-    {# ── KPI global ── #}
-    <div class="col-12">
-        <div class="card border-0 shadow-sm">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
             <div class="card-body d-flex align-items-center gap-3">
                 <span class="fs-1">📊</span>
                 <div>
@@ -17,8 +25,18 @@
             </div>
         </div>
     </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <span class="fs-1">💼</span>
+                <div>
+                    <div class="fs-5 fw-bold">{{ internshipScans }} demande{{ internshipScans > 1 ? 's' : '' }} de stage</div>
+                    <div class="text-muted small">Scans sur stands marqués « Stage »</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    {# ── Top 5 groupes ── #}
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header fw-bold">🏆 Top 5 Groupes</div>
@@ -44,12 +62,11 @@
         </div>
     </div>
 
-    {# ── Sphères les plus visitées ── #}
     <div class="col-md-6">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header fw-bold">🌐 Sphères les plus visitées</div>
             <div class="card-body">
-                {# Déjà trié par visites décroissantes : la 1re ligne EST le maximum #}
+                {# déjà trié desc #}
                 {% set maxVisits = sphereVisits ? (sphereVisits|first).visits : 1 %}
                 {% for s in sphereVisits %}
                 <div class="mb-2">
@@ -68,7 +85,63 @@
         </div>
     </div>
 
-    {# ── Top 10 élèves ── #}
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header fw-bold">⭐ Top 10 Stands visités</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr><th>Stand / Activité</th><th class="text-end">Scans</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for a in topActivities %}
+                        <tr>
+                            <td>{{ a.activity }}</td>
+                            <td class="text-end fw-bold">{{ a.visits }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="2" class="text-center text-muted py-3">Aucun scan enregistré</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header fw-bold">🎓 Élèves par niveau / établissement</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr><th>Établissement</th><th>Niveau</th><th class="text-end">Effectif</th></tr>
+                    </thead>
+                    <tbody>
+                    {% set totalStudents = 0 %}
+                    {% for row in studentsByLevel %}
+                        {% set totalStudents = totalStudents + row.students %}
+                        <tr>
+                            <td>{{ row.establishment }}</td>
+                            <td class="text-muted">{{ row.level }}</td>
+                            <td class="text-end fw-bold">{{ row.students }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="3" class="text-center text-muted py-3">Aucun élève inscrit</td></tr>
+                    {% endfor %}
+                    </tbody>
+                    {% if studentsByLevel %}
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="2" class="text-end fw-bold">Total</td>
+                            <td class="text-end fw-bold text-success">{{ totalStudents }}</td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div class="col-12">
         <div class="card border-0 shadow-sm">
             <div class="card-header fw-bold">🎓 Top 10 Élèves</div>

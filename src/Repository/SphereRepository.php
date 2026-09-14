@@ -17,10 +17,7 @@ class SphereRepository extends ServiceEntityRepository
         parent::__construct($registry, Sphere::class);
     }
 
-    /**
-     * charge uniquement les stands (TYPE_STAND) par sphère
-     * @return Sphere[]
-     */
+    /** @return Sphere[] */
     public function findAllWithStands(): array
     {
         return $this->createQueryBuilder('s')

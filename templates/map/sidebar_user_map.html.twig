@@ -15,11 +15,17 @@
                     <span class="value">{{ currentUser.group.code ?? '-' }}</span>
                 </div>
 
+                <div class="info-block">
+                    <span class="label">ÉLÈVES INSCRITS</span>
+                    <span class="value" id="students-count">{{ groupStudents|length }}</span>
+                </div>
+
                 <div id="group-list" class="group-grid">
                     {% for student in groupStudents %}
-                        <div class="student-card" data-id="{{ student.id }}" data-pseudo="{{ student.pseudo }}">
+                        {% set inactive = student.lastScanAt and student.lastScanAt < ("now"|date('U') - inactivityMin|default(25) * 60) %}
+                        <div class="student-card{{ (student.blockedUntil and student.blockedUntil > date()) or inactive ? ' student-card--alert' : '' }}" data-id="{{ student.id }}" data-pseudo="{{ student.pseudo }}"{% if student.lastScanAt %} data-last-scan="{{ student.lastScanAt }}"{% endif %}>
                             <span class="avatar avatar--sm">
-                                <img src="{{ asset('images/coccitest.webp') }}" alt="{{ student.pseudo }}">
+                                <img src="{{ asset(avatar(student.pseudo, 'petitvaisseau')) }}" alt="{{ student.pseudo }}" loading="lazy" decoding="async">
                             </span>
                             <span class="student-pseudo">{{ student.pseudo }}</span>
                             <span class="student-score">{{ student.score }} pts</span>
@@ -37,8 +43,8 @@
 
                 <div class="avatar-block">
                     <span class="avatar avatar--md">
-                        <img src="{{ asset('images/coccitest.webp') }}"
-                             alt="Avatar de {{ currentUser.pseudo }}">
+                        <img src="{{ asset(avatar(currentUser.pseudo, 'vaisseau')) }}"
+                             alt="Avatar de {{ currentUser.pseudo }}" loading="lazy" decoding="async">
                     </span>
                 </div>
 
@@ -64,9 +70,18 @@
             {% endif %}
 
             <div class="footer-block">
-                <a href="#" class="mentions-link">MENTIONS LEGALES</a>
+                {% if is_granted('ROLE_STUDENT') %}
+                    <a href="{{ path('app_bilan_eleve') }}" class="mentions-link">MON BILAN</a>
+                {% elseif is_granted('ROLE_ACCOMPANYING') %}
+                    <a href="{{ path('app_bilan_groupe') }}" class="mentions-link">BILAN GROUPE</a>
+                {% endif %}
+                <a href="{{ path('app_legal') }}" class="mentions-link">MENTIONS LEGALES</a>
             </div>
 
         </div>
     </div>
 </div>
+
+{% if is_granted('ROLE_ACCOMPANYING') %}
+    {% include 'structure/confirm_dialog.html.twig' with {id: 'poke-confirm', ok: 'Envoyer'} %}
+{% endif %}

@@ -13,7 +13,7 @@ abstract class FunctionalTestCase extends WebTestCase
 
     protected function setUp(): void
     {
-        $this->client  = static::createClient();
+        $this->client = static::createClient();
         $this->fixture = new DbFixture($this->em());
     }
 

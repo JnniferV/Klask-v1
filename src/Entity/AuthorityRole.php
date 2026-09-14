@@ -21,7 +21,7 @@ class AuthorityRole
     public function __construct(Authority $authority, Role $role)
     {
         $this->authority = $authority;
-        $this->role      = $role;
+        $this->role = $role;
     }
 
     public function getAuthority(): Authority

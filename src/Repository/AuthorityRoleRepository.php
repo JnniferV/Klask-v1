@@ -15,5 +15,4 @@ class AuthorityRoleRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, AuthorityRole::class);
     }
-
 }

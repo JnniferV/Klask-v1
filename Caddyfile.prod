@@ -1,0 +1,40 @@
+# Production — remplacer le domaine et l'e-mail avant déploiement.
+# Let's Encrypt génère et renouvelle le certificat automatiquement.
+
+{
+	email jennv.contact@gmail.com
+}
+
+klask.app {
+	encode zstd gzip
+
+	# Hub Mercure — flush_interval -1 obligatoire pour le SSE (temps réel).
+	handle /.well-known/mercure* {
+		reverse_proxy mercure:80 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		root * /app/public
+
+		# 'unsafe-inline' sur script-src : deux <script> inline existent (dashboard admin,
+		# confirmation de scan). Le point réellement dangereux (javascript: injecté via un lien
+		# de notification) est fermé par #[Assert\Url] sur Notification::$link, pas ici.
+		header {
+			-Server
+			X-Content-Type-Options nosniff
+			X-Frame-Options DENY
+			Referrer-Policy same-origin
+			Strict-Transport-Security "max-age=31536000"
+			Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+		}
+
+		# Noms hachés sous /assets, avatars jamais modifiés : sans cet en-tête le
+		# navigateur revalide à chaque page et re-télécharge ~300 Ko par visite.
+		@immuable path /assets/* /avatars/*
+		header @immuable Cache-Control "public, max-age=31536000, immutable"
+
+		php_server
+	}
+}

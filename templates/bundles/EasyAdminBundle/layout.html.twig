@@ -2,5 +2,9 @@
 
 {% block head_stylesheets %}
     {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('styles/tokens.css') }}">
     <link rel="stylesheet" href="{{ asset('styles/admin.css') }}">
 {% endblock %}
+
+{# importmap vide et invalide sans entrée AssetMapper, EasyAdmin n'en a pas besoin #}
+{% block importmap %}{% endblock %}

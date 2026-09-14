@@ -1,0 +1,7 @@
+<dialog id="{{ id }}" class="modal">
+    <p class="modal-msg">{{ message|default('') }}</p>
+    <form method="dialog" class="modal-actions">
+        <button value="cancel" class="btn btn--ghost">{{ cancel|default('Annuler') }}</button>
+        <button value="ok" class="btn" autofocus>{{ ok|default('Confirmer') }}</button>
+    </form>
+</dialog>

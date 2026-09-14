@@ -17,10 +17,10 @@ class NotifyUpcomingEventCommand extends Command
 {
     public function __construct(
         private readonly ActivityCategoryRepository $categoryRepository,
-        private readonly NotificationRepository     $notificationRepository,
-        private readonly RealtimeNotifier           $notifier,
-        private readonly EntityManagerInterface     $em,
-        private readonly AppParameterService        $params,
+        private readonly NotificationRepository $notificationRepository,
+        private readonly RealtimeNotifier $notifier,
+        private readonly EntityManagerInterface $em,
+        private readonly AppParameterService $params,
     ) {
         parent::__construct();
     }
@@ -35,12 +35,12 @@ class NotifyUpcomingEventCommand extends Command
 
     private function sendCategoryAlerts(OutputInterface $output): void
     {
-        $now        = new \DateTimeImmutable();
+        $now = new \DateTimeImmutable();
         $thresholds = $this->alertThresholds();
 
         foreach ($this->categoryRepository->findScheduledWithHour() as $category) {
             $start = $category->getBeginningHourCategory();
-            if ($start === null) {
+            if (null === $start) {
                 continue;
             }
 
@@ -51,10 +51,10 @@ class NotifyUpcomingEventCommand extends Command
 
             foreach ($category->getActivities() as $activity) {
                 $this->notifier->publish('event-alert', [
-                    'alert'         => true,
-                    'categoryType'  => $category->getType(),
-                    'activityName'  => $activity->getName(),
-                    'activityId'    => $activity->getId(),
+                    'alert' => true,
+                    'categoryType' => $category->getType(),
+                    'activityName' => $activity->getName(),
+                    'activityId' => $activity->getId(),
                     'minutesBefore' => $diffMin,
                 ]);
                 $output->writeln("Alerte {$diffMin}min : {$activity->getName()}");

@@ -38,7 +38,6 @@ document.querySelectorAll('[name="mapMode"]').forEach((r) =>
     }),
 );
 
-// activités de cette sphère en plus opaque
 data.forEach(function (s) {
     const z = document.createElement("div");
     z.className = "ghost sphere";
@@ -92,7 +91,7 @@ box.addEventListener("click", function (e) {
     }
 });
 
-// Bouton Ajuster à mes activités
+// bouton Ajuster à mes activités
 const autoBoundBtn = document.getElementById("auto-bound");
 if (autoBoundBtn) {
     const suggested = cfg.suggestedBounds;

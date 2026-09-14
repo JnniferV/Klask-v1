@@ -21,7 +21,6 @@ class Establishment
     /**
      * @var Collection<int, Group>
      */
-    // cascade persist : les classes ajoutées depuis le formulaire Établissement sont enregistrées avec lui
     #[ORM\OneToMany(targetEntity: Group::class, mappedBy: 'establishment', cascade: ['persist'], orphanRemoval: true)]
     private Collection $groups;
 

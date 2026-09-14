@@ -29,7 +29,7 @@ class ScanControllerTest extends FunctionalTestCase
     public function testUnQrScanneAvantInscriptionEstMemoriseEnSession(): void
     {
         $this->fixture->stand(self::TOKEN);
-        $this->client->request('GET', '/scan/qr/' . self::TOKEN);
+        $this->client->request('GET', '/scan/qr/'.self::TOKEN);
 
         $this->assertResponseIsSuccessful();
         $this->assertSame(
@@ -42,11 +42,11 @@ class ScanControllerTest extends FunctionalTestCase
     public function testUnQrScanneParUnEleveCrediteSesPoints(): void
     {
         $student = $this->fixture->student(rated: true);
-        $id      = (int) $student->getId();
+        $id = (int) $student->getId();
         $this->fixture->stand(self::TOKEN, 50);
         $this->client->loginUser($student);
 
-        $this->client->request('GET', '/scan/qr/' . self::TOKEN);
+        $this->client->request('GET', '/scan/qr/'.self::TOKEN);
 
         $this->assertResponseIsSuccessful();
         $this->assertGreaterThanOrEqual(50, $this->em()->find(User::class, $id)->getScore());

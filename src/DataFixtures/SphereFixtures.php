@@ -10,12 +10,12 @@ class SphereFixtures extends Fixture
 {
     /** @var array<string, string> name => couleur hex */
     private const SPHERES = [
-        'CRÉATIF'     => '#E74C3C',
-        'RIGOUREUX'   => '#3498DB',
-        'NOUVEAUTÉ'   => '#9B59B6',
-        'EXTÉRIEUR'   => '#27AE60',
+        'CRÉATIF' => '#E74C3C',
+        'RIGOUREUX' => '#3498DB',
+        'NOUVEAUTÉ' => '#9B59B6',
+        'EXTÉRIEUR' => '#27AE60',
         'COMMUNIQUER' => '#F39C12',
-        'UTILE'       => '#1ABC9C',
+        'UTILE' => '#1ABC9C',
     ];
 
     public function load(ObjectManager $manager): void
@@ -24,9 +24,11 @@ class SphereFixtures extends Fixture
             $sphere = new Sphere();
             $sphere->setName($name);
             $sphere->setColor($color);
+            // 6 % => 12 % de large, les 6 sphères tiennent sans se chevaucher
+            $sphere->setRadius(6.0);
 
             $manager->persist($sphere);
-            $this->addReference('sphere_' . $name, $sphere);
+            $this->addReference('sphere_'.$name, $sphere);
         }
 
         $manager->flush();

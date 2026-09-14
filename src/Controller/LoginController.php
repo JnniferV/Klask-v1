@@ -12,13 +12,13 @@ class LoginController extends AbstractController
     #[Route('/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
-        // Redirige si déjà connecté
+        // redirige si déjà connecté
         if ($this->getUser()) {
             return $this->redirectToRoute('app_map');
         }
 
         return $this->render('login/login.html.twig', [
-            'error'      => $authenticationUtils->getLastAuthenticationError(),
+            'error' => $authenticationUtils->getLastAuthenticationError(),
             'last_email' => $authenticationUtils->getLastUsername(),
         ]);
     }
@@ -26,7 +26,7 @@ class LoginController extends AbstractController
     #[Route('/logout', name: 'app_logout')]
     public function logout(): never
     {
-        // Intercepté automatiquement par Symfony Security — ce code n'est jamais exécuté normalement
+        // intercepté par Symfony Security, ce code ne s'exécute jamais en principe
         throw new \LogicException('Cette méthode ne doit jamais être appelée directement.');
     }
 }

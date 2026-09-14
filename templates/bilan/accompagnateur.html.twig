@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Bilan de groupe{% endblock %}
+
+{% block body %}
+<div class="hud-window">
+    <div class="hud-cap">
+        <h1>Bilan groupe{% if bilan.hasGroup %}<span>{{ bilan.group }}</span>{% endif %}</h1>
+    </div>
+
+    <div class="hud-body">
+        {% if not bilan.hasGroup %}
+            <p>Vous n'avez aucun groupe attribué.</p>
+        {% else %}
+            <div class="welcome-score">
+                Score total&nbsp;: <strong>{{ bilan.totalScore }}</strong> pts
+            </div>
+            <div class="welcome-score">
+                Stands visités&nbsp;: <strong>{{ bilan.totalScans }}</strong>
+            </div>
+
+            <h2>Par sphère</h2>
+            {% if bilan.spheresStats is empty %}
+                <p>Aucune donnée.</p>
+            {% else %}
+                <ul>
+                    {% for sphereName, count in bilan.spheresStats %}
+                        <li>{{ sphereName }} — {{ count }} visite(s)</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <h2>Stands, ateliers et conférences</h2>
+            {% if bilan.activitiesStats is empty %}
+                <p>Aucune donnée.</p>
+            {% else %}
+                <ul>
+                    {% for activityName, stats in bilan.activitiesStats %}
+                        <li>
+                            <strong>{{ activityName }}</strong> ({{ stats.category }})
+                            {% if stats.description %}<br>{{ stats.description }}{% endif %}
+                            <br>{{ stats.count }} élève(s) du groupe
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <div class="block-actions">
+                {% if bilan.isPdfUnlocked %}
+                    <p>Parcours validé — vous pouvez télécharger le bilan PDF.</p>
+                    <a href="{{ path('app_bilan_groupe_pdf') }}" class="btn-continuer">Télécharger le PDF</a>
+                {% else %}
+                    <p>PDF verrouillé : au moins 3 bilan.scans validés par la classe sont requis.</p>
+                    <button class="btn-continuer" disabled>PDF indisponible</button>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        <p class="block-actions">
+            <a href="{{ path('app_map') }}">← Retour au live</a>
+        </p>
+    </div>
+
+    <div class="hud-cap hud-cap--bot"></div>
+</div>
+{% endblock %}

@@ -13,7 +13,7 @@ class AppParameterServiceTest extends TestCase
 {
     private function service(?AppParameter $stored, ?CacheInterface $cache = null): AppParameterService
     {
-        $repository = $this->createMock(AppParameterRepository::class);
+        $repository = $this->createStub(AppParameterRepository::class);
         $repository->method('findOneBy')->willReturn($stored);
 
         return new AppParameterService($repository, $cache ?? $this->cache());
@@ -21,9 +21,9 @@ class AppParameterServiceTest extends TestCase
 
     private function cache(): CacheInterface
     {
-        $cache = $this->createMock(CacheInterface::class);
+        $cache = $this->createStub(CacheInterface::class);
         $cache->method('get')->willReturnCallback(
-            fn(string $key, callable $callback) => $callback($this->createMock(ItemInterface::class))
+            fn (string $key, callable $callback) => $callback($this->createStub(ItemInterface::class))
         );
 
         return $cache;

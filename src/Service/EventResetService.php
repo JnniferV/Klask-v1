@@ -5,15 +5,13 @@ namespace App\Service;
 use App\Entity\Event;
 use Doctrine\DBAL\Connection;
 
-// réinitialise UN event à sa fermeture
 final class EventResetService
 {
-    public function __construct(private readonly Connection $connection) {}
+    public function __construct(private readonly Connection $connection)
+    {
+    }
 
-    /**
-     * scans, parcours et ratings partent avec l'élève (FK ON DELETE CASCADE)
-     * @return array<string, int> nombre de lignes touchées par étape
-     */
+    /** @return array<string, int> */
     public function reset(Event $event): array
     {
         $eventId = (int) $event->getId();

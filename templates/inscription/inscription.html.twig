@@ -2,9 +2,11 @@
 
 {% block title %}Inscription{% endblock %}
 
-{% block stylesheets %}{{ parent() }}{% endblock %}
 
-{% block javascripts %}{{ parent() }}{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+    <script type="module" src="{{ asset('js/inscription.js') }}"></script>
+{% endblock %}
 
 {% block body %}
     <div class="container">

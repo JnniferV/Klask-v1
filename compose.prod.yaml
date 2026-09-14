@@ -1,0 +1,69 @@
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env.local
+    environment:
+      SERVER_NAME: klask.app
+    # Le source vient de l'image (COPY . . + asset-map:compile au build) : rien n'est monté
+    # depuis l'hôte ici. Seules les données qui doivent survivre à un rebuild le sont.
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - ./public/avatars:/app/public/avatars:ro          # 1200 visuels livrés par rsync
+      - ./public/images/qrcodes:/app/public/images/qrcodes  # générés par les fixtures, réimprimables
+      - sessions:/app/var/sessions                        # sinon un rebuild déconnecte tout le monde
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    depends_on:
+      db:
+        condition: service_healthy
+      mercure:
+        condition: service_started
+
+  worker:
+    build: .
+    restart: unless-stopped
+    env_file: .env.local
+    command: php bin/console messenger:consume scheduler_default --time-limit=3600
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: klask
+      MYSQL_USER: klask
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 10
+
+  mercure:
+    image: dunglas/mercure
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ':80'
+      MERCURE_PUBLISHER_JWT_KEY: '${MERCURE_JWT_SECRET}'
+      MERCURE_SUBSCRIBER_JWT_KEY: '${MERCURE_JWT_SECRET}'
+    volumes:
+      - mercure_data:/data
+      - mercure_config:/config
+
+volumes:
+  db_data:
+  sessions:
+  caddy_data:
+  caddy_config:
+  mercure_data:
+  mercure_config:

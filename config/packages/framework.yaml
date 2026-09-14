@@ -2,12 +2,12 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
-    # Session : durée 24h pour couvrir toute la journée de l'event.
-    # Les élèves n'ont pas de mot de passe — leur pseudo est leur identifiant de session.
+    # session : durée 24h pour couvrir toute la journée de l'event
+    # les élèves n'ont pas de mot de passe — leur pseudo est leur identifiant de session
     session:
-        # Répertoire dédié : par défaut PHP écrit dans le save_path de WAMP, partagé avec les
+        # répertoire dédié : par défaut PHP écrit dans le save_path de WAMP, partagé avec les
         # autres applis de la machine. Leur GC (php.ini : gc_maxlifetime = 1440) y supprimait
-        # les sessions Klask au bout de 24 min — les 24h ci-dessous n'étaient pas garanties.
+        # les sessions Klask au bout de 24 min — les 24h ci-dessous n'étaient pas garanties
         save_path: '%kernel.project_dir%/var/sessions'
         cookie_lifetime: 86400    # 24h — cookie persiste même si le browser se ferme
         gc_maxlifetime: 86400     # 24h — serveur conserve les données de session
@@ -15,11 +15,45 @@ framework:
         cookie_samesite: lax      # anti-CSRF sur les requêtes cross-site
         cookie_secure: auto       # HTTPS uniquement dès que la requête l'est
 
-    #esi: true
-    #fragments: true
+    # anti-énumération des codes de groupe : seuls les refus consomment un jeton
+    # (InscriptionController::save). Volontairement haut : l'établissement entier partage une
+    # IP publique et une erreur de niveau ou d'établissement compte comme un refus. Le pic
+    # légitime le plus défavorable (3 classes ensemble, une erreur sur deux) reste sous
+    # 20/min — 60 ne gêne aucun élève et plafonne quand même un script. Blocage max : 1 min
+    rate_limiter:
+        inscription:
+            policy: sliding_window
+            limit: 60
+            interval: '1 minute'
+        # Dompdf rend dans la requête : borne la rafale de fin d'événement
+        bilan_pdf:
+            policy: sliding_window
+            limit: 3
+            interval: '1 minute'
+        # protège les ~30 comptes à mot de passe et le quota d'envoi
+        reset_password:
+            policy: sliding_window
+            limit: 3
+            interval: '1 hour'
+
+    # esi: true
+    # fragments: true
 
 when@test:
     framework:
         test: true
         session:
             storage_factory_id: session.storage.factory.mock_file
+        # pool en mémoire, remis à zéro à chaque kernel de test — évite qu'une suite de
+        # tests /inscription/save déclenche la limite prévue pour un vrai flot d'attaque
+        cache:
+            pools:
+                cache.rate_limiter.test:
+                    adapter: cache.adapter.array
+        rate_limiter:
+            inscription:
+                cache_pool: cache.rate_limiter.test
+            bilan_pdf:
+                cache_pool: cache.rate_limiter.test
+            reset_password:
+                cache_pool: cache.rate_limiter.test

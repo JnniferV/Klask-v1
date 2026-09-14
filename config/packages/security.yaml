@@ -13,31 +13,43 @@ security:
         main:
             lazy: true
             provider: app_user_provider
+            # bruteforce sur les comptes accompagnateur/admin — les élèves, eux, n'ont pas de
+            # mot de passe. 5 échecs/min par couple identifiant+IP, et 25/min par IP seule
+            # (limiteur global posé automatiquement à 5 x max_attempts par LoginThrottlingFactory)
+            login_throttling:
+                max_attempts: 5
             form_login:
                 login_path: app_login
                 check_path: app_login
                 username_parameter: email
                 password_parameter: password
                 default_target_path: /map
+                # sans ceci, une visite antérieure d'une URL protégée (ex. /bienvenue en tant
+                # qu'anonyme) est mémorisée et réutilisée après connexion, même pour un rôle
+                # différent (accompagnateur) → Access Denied. /map redirige déjà selon le rôle
+                always_use_default_target_path: true
                 failure_path: app_login
             logout:
                 path: app_logout
                 target: app_login
-                # Purge le cache navigateur à la déconnexion : sans cela, le bouton Retour
-                # réaffiche la page connectée et laisse croire que la session a survécu.
-                # Volontairement limité à "cache" : "storage" effacerait le localStorage,
-                # donc la file des scans hors-ligne (assets/js/student-scan.js).
+                # purge le cache navigateur à la déconnexion : sans cela, le bouton Retour
+                # réaffiche la page connectée et laisse croire que la session a survécu
+                # volontairement limité à "cache" : "storage" effacerait le localStorage,
+                # donc la file des scans hors-ligne (assets/js/student-scan.js)
                 clear_site_data: ['cache']
 
     access_control:
         - { path: ^/$,            roles: PUBLIC_ACCESS }  # I4 — accès anonyme explicite à la page d'accueil
         - { path: ^/login,        roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password, roles: PUBLIC_ACCESS }
         - { path: ^/inscription,  roles: PUBLIC_ACCESS }
         - { path: ^/bienvenue,    roles: ROLE_STUDENT }
         - { path: ^/questionnaire, roles: ROLE_STUDENT }
         - { path: ^/accompanying,   roles: ROLE_ACCOMPANYING }
         - { path: ^/scan/qr,        roles: PUBLIC_ACCESS }  # URL dans QR code — accessible sans login, pending scan géré en session
         - { path: ^/scan,           roles: ROLE_STUDENT }
+        - { path: ^/bilan/eleve,     roles: ROLE_STUDENT }
+        - { path: ^/bilan/groupe,    roles: ROLE_ACCOMPANYING }
         - { path: ^/map,            roles: [ROLE_STUDENT, ROLE_ACCOMPANYING, ROLE_ADMIN] }
         - { path: ^/admin,          roles: ROLE_ADMIN }
 

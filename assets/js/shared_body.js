@@ -1,11 +1,16 @@
-const KEY = 'klask-theme';
-const apply = t => {
+const apply = (t) => {
     document.body.dataset.theme = t;
-    localStorage.setItem(KEY, t);
-    const btn = document.getElementById('theme-toggle');
-    if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+    document.cookie = `klask-theme=${t};path=/;max-age=31536000;samesite=lax`;
+    dispatchEvent(new Event("klask:theme")); // la carte de /map existe en deux versions
 };
 
-apply(localStorage.getItem(KEY) || 'standard');
-document.getElementById('theme-toggle')
-    ?.addEventListener('click', () => apply(document.body.dataset.theme === 'dark' ? 'standard' : 'dark'));
+addEventListener("click", (e) => {
+    if (e.target.closest(".theme-toggle"))
+        apply(document.body.dataset.theme === "dark" ? "standard" : "dark");
+});
+
+if (
+    "serviceWorker" in navigator &&
+    !["localhost", "127.0.0.1"].includes(location.hostname)
+)
+    navigator.serviceWorker.register("/sw.js");

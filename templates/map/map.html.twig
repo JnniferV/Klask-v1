@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% block body_class %}page-map{% if is_granted('ROLE_STUDENT') %} page-map--student{% endif %}{% endblock %}
+
 {% block title %}Carte interactive{% endblock %}
 
 {% block stylesheets %}
@@ -10,21 +12,22 @@
 
 {% block body %}
 
-    {% if instructionImage %}
+    {% if instructionImages %}
     <button id="btn-help" class="btn-help" aria-label="Aide">?</button>
 
     <div id="help-modal" class="intro-overlay" hidden role="dialog" aria-modal="true" aria-label="Instructions">
         <div class="intro-panel">
             <button id="btn-close-help" class="intro-close" aria-label="Fermer">✕</button>
-            <div class="intro-scroll" data-instruction-scroll></div>
+            <div class="intro-scroll">
+                <img class="intro-img intro-img--light" src="{{ asset(instructionImages.light) }}" alt="Instructions" decoding="async" loading="lazy">
+                <img class="intro-img intro-img--dark" src="{{ asset(instructionImages.dark) }}" alt="Instructions" decoding="async" loading="lazy">
+            </div>
         </div>
     </div>
-    <script type="application/json" id="instruction-image-url">{{ asset(instructionImage)|json_encode|raw }}</script>
     {% endif %}
 
     {% include 'structure/flashes.html.twig' with {variant: 'toast'} %}
 
-    {# wrapper principal — data-student pour CSS/JS conditionnel #}
     <div class="map-wrapper"{% if is_granted('ROLE_STUDENT') %} data-student{% endif %}>
 
         <div class="map-area">
@@ -32,33 +35,40 @@
                 <img
                     id="map-plan"
                     class="map-plan"
-                    src="{{ asset(alertMapActive ? 'images/carte_alerte.webp' : 'images/carte-simple.svg') }}"
-                    data-src-normal="{{ asset('images/carte-simple.svg') }}"
-                    data-src-alert="{{ asset('images/carte_alerte.webp') }}"
+                    {# plan thème serveur #}
+                    src="{{ asset('images/cartes ' ~ (app.request.cookies.get('klask-theme') == 'dark' ? 'sombre' : 'claire') ~ (alertMapActive ? ' alerte' : '') ~ '.webp') }}"
+                    data-light="{{ asset('images/cartes claire.webp') }}"
+                    data-light-alert="{{ asset('images/cartes claire alerte.webp') }}"
+                    data-dark="{{ asset('images/cartes sombre.webp') }}"
+                    data-dark-alert="{{ asset('images/cartes sombre alerte.webp') }}"
                     alt="Plan de la salle"
                     fetchpriority="high"
                     draggable="false"
                 >
-                {# Calque sphères et activités — rempli par map.js #}
                 <div class="map-overlays" id="map-overlays" aria-live="polite">
                     <p class="map-loading" id="map-loading">Chargement…</p>
-
-                    {# Bulle info #}
-                    <div id="activity-bubble" class="activity-bubble" hidden>
-                        <button id="btn-close-bubble" class="btn-close-bubble" aria-label="Fermer">✕</button>
-                        <p id="bubble-name" class="bubble-name"></p>
-                        <p id="bubble-desc" class="bubble-desc"></p>
-                        <p id="bubble-wait" class="bubble-wait"></p>
-                    </div>
                 </div>
             </div>
         </div>
 
-        {{ include('map/sidebar_user_map.html.twig') }}
+        {# hors de .map-canvas, sinon le zoom fausse le position fixed #}
+        <div id="activity-bubble" class="activity-bubble" hidden>
+            <button id="btn-close-bubble" class="btn-close-bubble" aria-label="Fermer">✕</button>
+            <p id="bubble-name" class="bubble-name"></p>
+            <p id="bubble-desc" class="bubble-desc"></p>
+            {% if is_granted('ROLE_STUDENT') %}<p id="bubble-points" class="bubble-points" hidden></p>{% endif %}
+            <p id="bubble-wait" class="bubble-wait"></p>
+        </div>
+
+        {% if not is_granted('ROLE_ADMIN') %}
+            {{ include('map/sidebar_user_map.html.twig') }}
+        {% endif %}
 
     </div>
 
     {% if is_granted('ROLE_STUDENT') %}
+    <button type="button" class="theme-toggle theme-toggle--map" aria-label="Changer de thème"></button>
+
     <button id="btn-scan" class="btn-scan" aria-label="Scanner un QR code">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
@@ -67,10 +77,14 @@
     </button>
     {% endif %}
 
-    {% if showIntro and instructionImage %}
+    {% if showIntro and instructionImages %}
     <aside id="intro-overlay" class="intro-overlay" role="dialog" aria-modal="true" aria-label="Instructions">
         <div class="intro-panel">
-            <div class="intro-scroll" data-instruction-scroll></div>
+            <div class="intro-scroll">
+                {# intro lazy thème #}
+                <img class="intro-img intro-img--light" src="{{ asset(instructionImages.light) }}" alt="Instructions" decoding="async" loading="lazy">
+                <img class="intro-img intro-img--dark" src="{{ asset(instructionImages.dark) }}" alt="Instructions" decoding="async" loading="lazy">
+            </div>
             <button type="button" class="intro-ack" data-intro-ack="{{ path('app_map_intro_ack') }}">J'ai compris</button>
         </div>
     </aside>
@@ -82,13 +96,14 @@
 
 {% block javascripts %}
     {{ parent() }}
-    <script type="application/json" id="map-bootstrap">{"mapData":{{ spheresJson|raw }},"topSpheres":{{ topSpheresJson|raw }},"bottomSpheres":{{ bottomSpheresJson|raw }},"parcours":{{ parcoursJson|raw }},"scanned":{{ scannedJson|raw }},"mercureUrl":{{ mercure(mercureTopics)|json_encode|raw }},"notification":{{ lastNotification|json_encode|raw }},"alertMapActive":{{ alertMapActive ? 'true' : 'false' }}}</script>
+    <script type="application/json" id="map-bootstrap">{"mapData":{{ spheresJson|raw }},"topSpheres":{{ topSpheresJson|raw }},"bottomSpheres":{{ bottomSpheresJson|raw }},"parcours":{{ parcoursJson|raw }},"scanned":{{ scannedJson|raw }},"mercureUrl":{{ mercure(mercureTopics)|json_encode|raw }},"notificationsUrl":{{ path('app_map_notifications')|json_encode|raw }},"alertMapActive":{{ alertMapActive ? 'true' : 'false' }},"pointsOutsideTop3":{{ pointsOutsideTop3 }}}</script>
     <script type="module" src="{{ asset('js/map.js') }}"></script>
 
     {% if is_granted('ROLE_ACCOMPANYING') %}
     <script type="application/json" id="accompanying-config">{{- {
         pokeUrl:   path('app_accompanying_poke', {id: '__ID__'}),
-        csrfToken: csrf_token('poke')
+        csrfToken: csrf_token('poke'),
+        inactivityMin: inactivityMin
     }|json_encode|raw -}}</script>
     <script type="module" src="{{ asset('js/accompanying-sidebar.js') }}"></script>
     {% endif %}

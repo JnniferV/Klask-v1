@@ -14,7 +14,7 @@ class EventRepository extends ServiceEntityRepository
         parent::__construct($registry, Event::class);
     }
 
-    //events dont endHourEvent est passé et qui n'ont pas encore été réinitialisés
+    /** @return Event[] */
     public function findTerminatedNotReset(): array
     {
         return $this->createQueryBuilder('e')

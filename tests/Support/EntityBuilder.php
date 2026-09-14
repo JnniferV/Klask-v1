@@ -4,16 +4,19 @@ namespace App\Tests\Support;
 
 use App\Entity\Activity;
 use App\Entity\ActivityCategory;
+use App\Entity\Authority;
 use App\Entity\Group;
 use App\Entity\Sphere;
 use App\Entity\User;
-
+use App\Security\RoleSecurity;
 
 final class EntityBuilder
 {
     /**
      * @template T of object
-     * @param  T $entity
+     *
+     * @param T $entity
+     *
      * @return T
      */
     public static function withId(object $entity, int $id): object
@@ -39,7 +42,7 @@ final class EntityBuilder
     public static function activity(int $id, ActivityCategory $category, ?Sphere $sphere = null, string $name = 'Stand'): Activity
     {
         $activity = (new Activity())
-            ->setName($name . ' ' . $id)
+            ->setName($name.' '.$id)
             ->setCategory($category)
             ->setSphere($sphere);
 
@@ -55,7 +58,8 @@ final class EntityBuilder
 
     public static function student(int $id = 1, ?Group $group = null, int $score = 0): User
     {
-        $user = (new User())->setPseudo('Renard cosmique')->setScore($score)->setGroup($group);
+        $authority = (new Authority())->setAuthorityUser(RoleSecurity::STUDENT->value);
+        $user = (new User())->setPseudo('Renard cosmique')->setScore($score)->setGroup($group)->setAuthority($authority);
 
         return self::withId($user, $id);
     }

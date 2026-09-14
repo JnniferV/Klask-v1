@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Statistiques - KLASK</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #8B0000; padding-bottom: 15px; margin-bottom: 25px; }
+        .header h1 { color: #8B0000; margin: 0; text-transform: uppercase; }
+        .header p { margin: 3px 0; color: #555; font-size: 12px; }
+        .summary-card { background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; text-align: center; border-radius: 5px; }
+        .summary-card h3 { margin: 0 0 5px 0; font-size: 14px; color: #555; }
+        .summary-card .value { font-size: 24px; font-weight: bold; color: #27ae60; }
+        h2 { color: #8B0000; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 25px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+        th { background-color: #f1f1f1; color: #444; }
+        .text-end { text-align: right; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Statistiques de l'event — KLASK</h1>
+    <p>Généré le {{ 'now'|date('d/m/Y à H:i') }}</p>
+</div>
+
+<table style="width: 100%; margin-bottom: 25px;">
+    <tr>
+        <td style="width: 50%; border: none; padding-right: 10px;">
+            <div class="summary-card">
+                <h3>Scans validés</h3>
+                <div class="value">{{ totalScans }}</div>
+            </div>
+        </td>
+        <td style="width: 50%; border: none; padding-left: 10px;">
+            <div class="summary-card">
+                <h3>Demandes de stage</h3>
+                <div class="value">{{ internshipScans }}</div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<h2>Top 5 Groupes</h2>
+<table>
+    <thead><tr><th>#</th><th>Groupe</th><th>Élèves</th><th class="text-end">Score</th></tr></thead>
+    <tbody>
+    {% for g in topGroups %}
+        <tr><td>{{ loop.index }}</td><td>{{ g.name }} ({{ g.code }})</td><td>{{ g.studentCount }}</td><td class="text-end">{{ g.score }} pts</td></tr>
+    {% else %}
+        <tr><td colspan="4">Aucun groupe</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h2>Sphères les plus visitées</h2>
+<table>
+    <thead><tr><th>Sphère</th><th class="text-end">Scans</th></tr></thead>
+    <tbody>
+    {% for s in sphereVisits %}
+        <tr><td>{{ s.sphere }}</td><td class="text-end">{{ s.visits }}</td></tr>
+    {% else %}
+        <tr><td colspan="2">Aucun scan enregistré</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h2>Top 10 Stands visités</h2>
+<table>
+    <thead><tr><th>Stand / Activité</th><th class="text-end">Scans</th></tr></thead>
+    <tbody>
+    {% for a in topActivities %}
+        <tr><td>{{ a.activity }}</td><td class="text-end">{{ a.visits }}</td></tr>
+    {% else %}
+        <tr><td colspan="2">Aucun scan enregistré</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h2>Élèves par niveau / établissement</h2>
+<table>
+    <thead><tr><th>Établissement</th><th>Niveau</th><th class="text-end">Effectif</th></tr></thead>
+    <tbody>
+    {% for row in studentsByLevel %}
+        <tr><td>{{ row.establishment }}</td><td>{{ row.level }}</td><td class="text-end">{{ row.students }}</td></tr>
+    {% else %}
+        <tr><td colspan="3">Aucun élève inscrit</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h2>Top 10 Élèves</h2>
+<table>
+    <thead><tr><th>#</th><th>Pseudo</th><th>Groupe</th><th>Scans</th><th class="text-end">Score</th></tr></thead>
+    <tbody>
+    {% for u in topStudents %}
+        <tr><td>{{ loop.index }}</td><td>{{ u.pseudo }}</td><td>{{ u.groupName ?? '—' }}</td><td>{{ u.scanCount }}</td><td class="text-end">{{ u.score }} pts</td></tr>
+    {% else %}
+        <tr><td colspan="5">Aucun élève inscrit</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>

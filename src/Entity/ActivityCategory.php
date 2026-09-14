@@ -10,12 +10,11 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ActivityCategoryRepository::class)]
 class ActivityCategory
 {
-    public const TYPE_STAND      = 'Stand';
-    public const TYPE_ATELIER    = 'Atelier';
+    public const TYPE_STAND = 'Stand';
+    public const TYPE_ATELIER = 'Atelier';
     public const TYPE_CONFERENCE = 'Conférence';
     public const TYPE_PROFESSION = 'Profession';
 
-    //catégories dont les activités ont un horaire fixe
     public const SCHEDULED_TYPES = [self::TYPE_ATELIER, self::TYPE_CONFERENCE];
 
     #[ORM\Id]
@@ -50,7 +49,7 @@ class ActivityCategory
 
     public function isStand(): bool
     {
-        return $this->type === self::TYPE_STAND;
+        return self::TYPE_STAND === $this->type;
     }
 
     public function getType(): string

@@ -13,6 +13,16 @@
 :443 {
 	tls /etc/caddy/certs/dev.pem /etc/caddy/certs/dev-key.pem
 
+	# statiques public/ : bon Content-Type (php -S renvoie text/html sinon)
+	handle /assets/* {
+		root * /public
+		file_server
+	}
+	handle /bundles/* {
+		root * /public
+		file_server
+	}
+
 	# Hub Mercure — joint par le réseau Docker interne, jamais exposé directement.
 	# flush_interval -1 : obligatoire en SSE, sinon les événements restent bufferisés.
 	handle /.well-known/mercure* {
@@ -24,6 +34,9 @@
 	# Application Symfony sur l'hôte, lancée en clair (--no-tls) : le TLS est terminé ici.
 	# reverse_proxy pose X-Forwarded-Proto/Host/For, lus par SYMFONY_TRUSTED_PROXIES.
 	handle {
+		# Uniquement ici : `encode` bufferise, ce qui casserait le SSE du hub ci-dessus.
+		# Caddy filtre déjà par Content-Type (pas de recompression des webp/woff2).
+		encode zstd gzip
 		reverse_proxy host.docker.internal:8000
 	}
 }

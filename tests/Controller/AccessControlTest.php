@@ -6,11 +6,11 @@ use App\Tests\Support\FunctionalTestCase;
 
 class AccessControlTest extends FunctionalTestCase
 {
-    public function testLaPageDAccueilResteOuverteAuxVisiteurs(): void
+    public function testUnVisiteurEstAiguilleVersLInscriptionEtNonVersLeLogin(): void
     {
         $this->client->request('GET', '/');
 
-        $this->assertResponseIsSuccessful();
+        $this->assertResponseRedirects('/inscription');
     }
 
     public function testLesPagesEleveSontFermeesAuxVisiteurs(): void
@@ -18,7 +18,7 @@ class AccessControlTest extends FunctionalTestCase
         foreach (['/map', '/questionnaire', '/bienvenue'] as $url) {
             $this->client->request('GET', $url);
 
-            $this->assertResponseRedirects(null, null, $url . ' doit exiger une connexion.');
+            $this->assertResponseRedirects(null, null, $url.' doit exiger une connexion.');
             $this->assertStringEndsWith('/login', (string) $this->client->getResponse()->headers->get('Location'));
         }
     }

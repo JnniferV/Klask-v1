@@ -8,6 +8,7 @@ use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 
+/** @implements UserProviderInterface<User> */
 class AppUserProvider implements UserProviderInterface
 {
     public function __construct(private readonly UserRepository $userRepository)
@@ -16,10 +17,9 @@ class AppUserProvider implements UserProviderInterface
 
     public function loadUserByIdentifier(string $identifier): UserInterface
     {
-        // une seule requête avec JOIN (group, establishment, authority
         $user = $this->userRepository->findByIdentifierEager($identifier);
 
-        if ($user === null) {
+        if (null === $user) {
             throw new UserNotFoundException(sprintf('Utilisateur "%s" introuvable.', $identifier));
         }
 
@@ -33,6 +33,6 @@ class AppUserProvider implements UserProviderInterface
 
     public function supportsClass(string $class): bool
     {
-        return $class === User::class || is_subclass_of($class, User::class);
+        return User::class === $class || is_subclass_of($class, User::class);
     }
 }

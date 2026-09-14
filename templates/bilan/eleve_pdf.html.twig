@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mon Bilan AJE29</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; margin: 0; padding: 20px; }
+        h1 { color: #004d99; text-align: center; border-bottom: 2px solid #004d99; padding-bottom: 10px; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .score-box { background-color: #f4f4f4; border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .score-box h2 { margin: 0 0 10px 0; color: #555; font-size: 18px; }
+        .score-value { font-size: 28px; font-weight: bold; color: #27ae60; }
+        .parcours h3 { color: #004d99; margin-top: 30px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
+        th { background-color: #f9f9f9; color: #666; }
+        .note { font-size: 12px; color: #777; margin-top: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>BILAN DE L'ÉVÉNEMENT AJE29</h1>
+    <p>Participant : <strong>{{ bilan.user.userIdentifier }}</strong></p>
+</div>
+
+<table style="width: 100%; margin-bottom: 30px;">
+    <tr>
+        <td style="width: 50%; padding-right: 10px; border: none;">
+            <div class="score-box">
+                <h2>Mon Score Personnel</h2>
+                <div class="score-value">{{ bilan.scorePerso }} pts</div>
+            </div>
+        </td>
+        {% if bilan.group %}
+            <td style="width: 50%; padding-left: 10px; border: none;">
+                <div class="score-box">
+                    <h2>Score Équipe ({{ bilan.group.name|default(bilan.group.code) }})</h2>
+                    <div class="score-value">{{ bilan.scoreGroupe }} pts</div>
+                </div>
+            </td>
+        {% endif %}
+    </tr>
+</table>
+
+<div class="parcours">
+    <h3>Stands validés</h3>
+
+    {% if bilan.scans is empty %}
+        <p style="text-align: center; color: #888; margin-top: 20px;">Aucun stand n'a encore été validé.</p>
+    {% else %}
+        <table>
+            <thead>
+            <tr>
+                <th>Activité / Stand</th>
+                <th>Catégorie</th>
+                <th>Sphère</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for scan in bilan.scans %}
+                <tr>
+                    <td><strong>{{ scan.activity.name }}</strong></td>
+                    <td>{{ scan.activity.category.type }}</td>
+                    <td>{{ scan.activity.sphere ? scan.activity.sphere.name : '—' }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <p class="note">Le score total inclut les bonus de parcours éventuels.</p>
+    {% endif %}
+</div>
+
+</body>
+</html>

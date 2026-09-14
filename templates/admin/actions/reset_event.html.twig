@@ -1,0 +1,9 @@
+{# @var action \EasyCorp\Bundle\EasyAdminBundle\Dto\ActionDto #}
+<form action="{{ action.linkUrl }}" method="post" style="display:inline">
+    <input type="hidden" name="_token" value="{{ csrf_token('reset_event') }}">
+    <button type="submit" class="{{ action.cssClass }}"
+            onclick="return confirm('Réinitialiser cet événement va supprimer tous les comptes élèves, leurs scans et leurs bilans. Action irréversible. Continuer ?');">
+        {% if action.icon %}<i class="{{ action.icon }}"></i>{% endif %}
+        {{ action.label|trans }}
+    </button>
+</form>

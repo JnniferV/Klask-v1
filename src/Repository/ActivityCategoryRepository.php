@@ -6,6 +6,7 @@ use App\Entity\ActivityCategory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/** @extends ServiceEntityRepository<ActivityCategory> */
 class ActivityCategoryRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -13,10 +14,7 @@ class ActivityCategoryRepository extends ServiceEntityRepository
         parent::__construct($registry, ActivityCategory::class);
     }
 
-    /**
-     * Catégories Atelier / Conférence avec un horaire défini
-     * @return ActivityCategory[]
-     */
+    /** @return ActivityCategory[] */
     public function findScheduledWithHour(): array
     {
         return $this->createQueryBuilder('c')

@@ -9,9 +9,9 @@ use Doctrine\Persistence\ObjectManager;
 
 class RoleFixtures extends Fixture
 {
-    public const ROLE_ADMIN_REFERENCE        = 'role_admin';
+    public const ROLE_ADMIN_REFERENCE = 'role_admin';
     public const ROLE_ACCOMPANYING_REFERENCE = 'role_accompanying';
-    public const ROLE_STUDENT_REFERENCE      = 'role_student';
+    public const ROLE_STUDENT_REFERENCE = 'role_student';
 
     public function load(ObjectManager $manager): void
     {
@@ -25,6 +25,7 @@ class RoleFixtures extends Fixture
         $manager->flush();
     }
 
+    /** @return list<array{0: string, 1: string}> */
     private function getRoles(): array
     {
         return [
