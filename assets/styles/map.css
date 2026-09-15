@@ -1,4 +1,6 @@
-.page-map main { padding: 0; display: block; height: 100vh; overflow: hidden; }
+.page-map main {  padding: 0;
+    overflow: hidden;
+    align-items: stretch; }
 .page-map footer { display: none; }
 
 .page-map:not(.page-map--student) .site-header { z-index: 10002; }
