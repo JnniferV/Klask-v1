@@ -1,11 +1,3 @@
-@font-face {
-    font-family: 'Fredoka One';
-    font-style: normal;
-    font-weight: 400;
-    font-display: swap;
-    src: url('../fonts/fredoka-one-400.woff2') format('woff2');
-}
-
 .trigger-tab {
     position: fixed;
     right: 0;
