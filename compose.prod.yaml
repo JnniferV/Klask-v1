@@ -1,4 +1,3 @@
-
 services:
   app:
     build: .
@@ -10,9 +9,10 @@ services:
     # depuis l'hôte ici. Seules les données qui doivent survivre à un rebuild le sont.
     volumes:
       - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
-      - ./public/avatars:/app/public/avatars:ro          # 1200 visuels livrés par rsync
-      - ./public/images/qrcodes:/app/public/images/qrcodes  # générés par les fixtures, réimprimables
-      - sessions:/app/var/sessions                        # sinon un rebuild déconnecte tout le monde
+      - ./Caddyfile.prod:/etc/frankenphp/Caddyfile:ro
+      - ./public/avatars:/app/public/avatars:ro # 1200 visuels livrés par rsync
+      - ./public/images/qrcodes:/app/public/images/qrcodes # générés par les fixtures, réimprimables
+      - sessions:/app/var/sessions # sinon un rebuild déconnecte tout le monde
       - caddy_data:/data
       - caddy_config:/config
     ports:
@@ -53,9 +53,9 @@ services:
     image: dunglas/mercure
     restart: unless-stopped
     environment:
-      SERVER_NAME: ':80'
-      MERCURE_PUBLISHER_JWT_KEY: '${MERCURE_JWT_SECRET}'
-      MERCURE_SUBSCRIBER_JWT_KEY: '${MERCURE_JWT_SECRET}'
+      SERVER_NAME: ":80"
+      MERCURE_PUBLISHER_JWT_KEY: "${MERCURE_JWT_SECRET}"
+      MERCURE_SUBSCRIBER_JWT_KEY: "${MERCURE_JWT_SECRET}"
     volumes:
       - mercure_data:/data
       - mercure_config:/config
