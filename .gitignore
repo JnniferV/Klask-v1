@@ -40,3 +40,13 @@ phpstan.neon
 # OS
 Thumbs.db
 .DS_Store
+
+###> klask/avatars ###
+# contenu livré par scp et monté en volume, pas du code
+# seuls les 3 visuels de repli restent versionnés
+/public/avatars/*
+!/public/avatars/default.webp
+!/public/avatars/vaisseaudefault.webp
+!/public/avatars/petitvaisseaudefault.webp
+###< klask/avatars ###
+
