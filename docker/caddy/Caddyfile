@@ -13,11 +13,9 @@
 :443 {
 	tls /etc/caddy/certs/dev.pem /etc/caddy/certs/dev-key.pem
 
-	# statiques public/ : bon Content-Type (php -S renvoie text/html sinon)
-	handle /assets/* {
-		root * /public
-		file_server
-	}
+	# /assets/* : AssetMapper (dev) sert CSS/JS/images dynamiquement via Symfony —
+	# ne pas file_server ici (public/assets/ n'existe qu'après asset-map:compile).
+	# /bundles/* : fichiers physiques copiés par assets:install.
 	handle /bundles/* {
 		root * /public
 		file_server
