@@ -48,14 +48,23 @@ class AccompanyingCrudController extends AbstractCrudController
         yield TextField::new('email', 'Email');
         // le groupe est la seule source pour poke et les scores temps réel
         yield AssociationField::new('group', 'Groupe');
-        if (Crud::PAGE_NEW === $pageName) {
-            yield TextField::new('password', 'Mot de passe temporaire')
-                ->setFormType(PasswordType::class)
-                ->setFormTypeOption('constraints', [
-                    new NotBlank(message: 'Veuillez saisir un mot de passe.'),
-                    new Length(min: 12, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.', max: 4096),
-                ]);
+
+        if (!\in_array($pageName, [Crud::PAGE_NEW, Crud::PAGE_EDIT], true)) {
+            return;
         }
+
+        $creation = Crud::PAGE_NEW === $pageName;
+
+        // PasswordType n'affiche jamais la valeur : le hash ne sort pas du serveur
+        yield TextField::new('password', $creation ? 'Mot de passe temporaire' : 'Nouveau mot de passe (vide = inchangé)')
+            ->setFormType(PasswordType::class)
+            ->setRequired($creation)
+            // vide à l'édition = null, la contrainte de longueur ne se déclenche pas
+            ->setFormTypeOption('empty_data', null)
+            ->setFormTypeOption('constraints', array_filter([
+                $creation ? new NotBlank(message: 'Veuillez saisir un mot de passe.') : null,
+                new Length(min: 8, minMessage: 'Le mot de passe doit contenir au moins {{ limit }} caractères.', max: 4096),
+            ]));
     }
 
     public function createIndexQueryBuilder(SearchDto $searchDto, EntityDto $entityDto, FieldCollection $fields, FilterCollection $filters): QueryBuilder
@@ -76,9 +85,18 @@ class AccompanyingCrudController extends AbstractCrudController
 
     public function persistEntity(EntityManagerInterface $em, $entityInstance): void
     {
-        
         $plain = $entityInstance->getPassword() ?? throw new \LogicException('Mot de passe requis.');
         $entityInstance->setPassword($this->hasher->hashPassword($entityInstance, $plain));
         parent::persistEntity($em, $entityInstance);
+    }
+
+    public function updateEntity(EntityManagerInterface $em, $entityInstance): void
+    {
+        // champ vide : on restaure le hash d'origine, sinon on hache la saisie
+        $plain = $entityInstance->getPassword();
+        $entityInstance->setPassword(null === $plain
+            ? ($em->getUnitOfWork()->getOriginalEntityData($entityInstance)['password'] ?? null)
+            : $this->hasher->hashPassword($entityInstance, $plain));
+        parent::updateEntity($em, $entityInstance);
     }
 }
