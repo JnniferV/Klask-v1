@@ -48,8 +48,5 @@ when@prod:
                 type: console
                 process_psr_3_messages: false
                 channels: ["!event", "!doctrine"]
-            deprecation:
-                type: stream
-                channels: [deprecation]
-                path: php://stderr
-                formatter: monolog.formatter.json
+            # pas de handler deprecation en prod : le canal est exclu de main, donc rien
+            # n'est écrit. Les dépréciations restent visibles en dev via dev.log
