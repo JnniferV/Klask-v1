@@ -39,6 +39,9 @@ final class AvatarExtension
 
     public static function slug(string $value): string
     {
+        // « Crabe de la royauté 2 » partage le visuel de « Crabe de la royauté »
+        $value = (string) preg_replace('/\s+\d+$/', '', $value);
+
         $ascii = strtr(mb_strtolower($value, 'UTF-8'), [
             'à' => 'a', 'â' => 'a', 'ä' => 'a',
             'é' => 'e', 'è' => 'e', 'ê' => 'e', 'ë' => 'e',
