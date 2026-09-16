@@ -52,6 +52,13 @@ class AvatarExtensionTest extends TestCase
         }
     }
 
+    // au-delà de 400 élèves le pseudo est suffixé, le visuel reste celui du pseudo de base
+    public function testLeSuffixeNumeriqueNeChangePasLeVisuel(): void
+    {
+        $this->assertSame('crabedelaroyaute', AvatarExtension::slug('Crabe de la royauté 2'));
+        $this->assertSame('crabedelaroyaute', AvatarExtension::slug('Crabe de la royauté'));
+    }
+
     // neutralise path traversal
     public function testLeSlugNeutraliseTouteTentativeDeTraverseeDeChemin(): void
     {
