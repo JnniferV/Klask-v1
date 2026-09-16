@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Form\InscriptionFormType;
 use App\Service\InscriptionService;
 use App\Service\ScanService;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -102,6 +103,9 @@ class InscriptionController extends AbstractController
             $this->flashPendingScan($created, $session);
 
             return $this->redirectToRoute('app_bienvenue');
+        } catch (UniqueConstraintViolationException) {
+            // identité prise par une inscription simultanée, la validation suivante en tire une autre
+            return $this->refuse('Cette identité vient d\'être attribuée. Valide à nouveau, tu en auras une autre.', $form);
         } catch (\Throwable $e) {
             $this->logger->error('Erreur création utilisateur', ['exception' => $e]);
 
