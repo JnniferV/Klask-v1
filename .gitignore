@@ -50,3 +50,5 @@ Thumbs.db
 !/public/avatars/petitvaisseaudefault.webp
 ###< klask/avatars ###
 
+/public/images/qrcodes/
+###< klask/qrcodes ###
