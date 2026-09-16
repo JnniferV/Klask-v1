@@ -194,6 +194,8 @@
     margin-top: .55rem;
     display: block;
     letter-spacing: .3px;
+    /* « Accompagnateurs » déborde de la case aux largeurs intermédiaires */
+    overflow-wrap: break-word;
 }
 
 .admin-card--activities {
