@@ -38,6 +38,10 @@ class InscriptionService
     ) {
     }
 
+    // 400 identités, rejouées une fois avec un suffixe : « Crabe de la royauté 2 »
+    // le visuel reste celui du pseudo de base, aucun nouveau fichier à produire
+    private const MAX_ROUNDS = 2;
+
     public function generateUniquePseudo(string $preferred = ''): string
     {
         $taken = array_flip($this->userRepository->findTakenPseudos());
@@ -46,13 +50,16 @@ class InscriptionService
             return $preferred;
         }
 
-        $free = array_filter($this->allPseudos(), static fn (string $p): bool => !isset($taken[$p]));
+        for ($round = 1; $round <= self::MAX_ROUNDS; ++$round) {
+            $suffix = 1 === $round ? '' : ' '.$round;
+            $free = array_filter($this->allPseudos(), static fn (string $p): bool => !isset($taken[$p.$suffix]));
 
-        if ([] === $free) {
-            throw new \RuntimeException('Toutes les identités sont attribuées.');
+            if ([] !== $free) {
+                return $free[array_rand($free)].$suffix;
+            }
         }
 
-        return $free[array_rand($free)];
+        throw new \RuntimeException('Toutes les identités sont attribuées.');
     }
 
     /** @return string[] */
