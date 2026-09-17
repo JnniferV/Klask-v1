@@ -37,6 +37,8 @@ class EventCrudController extends AbstractCrudController
         return $crud
             ->setEntityLabelInSingular('Event')
             ->setEntityLabelInPlural('Events')
+            // en dropdown easyadmin ignore le template de l'action et la rend en lien GET
+            ->showEntityActionsInlined()
             ->setDefaultSort(['beginningHourEvent' => 'DESC']);
     }
 
