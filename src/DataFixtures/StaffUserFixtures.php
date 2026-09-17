@@ -51,8 +51,8 @@ class StaffUserFixtures extends Fixture implements DependentFixtureInterface
         return [
             ['admin@klask.fr',          'AdminKlask2026!',  AuthorityFixtures::AUTHORITY_ADMIN_REFERENCE,         null],
             ['accompagnateur@klask.fr', 'AccKlask2026!',    AuthorityFixtures::AUTHORITY_ACCOMPANYING_REFERENCE,  'GRP0002'],
-            // compte de test pour valider le flux mot de passe oublié (réception réelle des mails)
-            ['jennv.contact@gmail.com', 'TestKlask2026!',   AuthorityFixtures::AUTHORITY_ACCOMPANYING_REFERENCE,  'GRP0003'],
+            // boîte du domaine, sert aussi à valider le flux mot de passe oublié
+            ['info@klask.app',          'TestKlask2026!',   AuthorityFixtures::AUTHORITY_ACCOMPANYING_REFERENCE,  'GRP0003'],
         ];
     }
 }
