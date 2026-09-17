@@ -7,8 +7,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-    # doit correspondre au compte authentifié dans MAILER_DSN (Gmail rejette un expéditeur différent)
-    app.mailer_from: 'jennv.contact@gmail.com'
+    # doit correspondre au compte authentifié dans MAILER_DSN, sinon le serveur rejette l'envoi
+    app.mailer_from: '%env(MAILER_FROM)%'
 services:
     # default configuration for services in *this* file
     _defaults:
