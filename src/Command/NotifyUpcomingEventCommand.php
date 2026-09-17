@@ -65,7 +65,13 @@ class NotifyUpcomingEventCommand extends Command
     private function sendScheduledNotifications(OutputInterface $output): void
     {
         foreach ($this->notificationRepository->findPendingScheduled() as $notification) {
-            $this->notifier->publish($notification->getMercureTopic(), $notification->toMercurePayload());
+            // sans sentAt la notif sera retentée au tour suivant, l'échec ne se perd pas
+            if (!$this->notifier->publish($notification->getMercureTopic(), $notification->toMercurePayload())) {
+                $output->writeln("Hub injoignable : {$notification->getTitle()}");
+
+                continue;
+            }
+
             $notification->setSentAt(new \DateTimeImmutable());
             $output->writeln("Notif envoyée : {$notification->getTitle()}");
         }
