@@ -106,7 +106,8 @@
 }
 
 .sphere-label {
-    font: 700 clamp(.42rem, 1vw, .72rem)/1.2 var(--f-body);
+    /* plancher relevé : sur mobile c'est lui qui s'applique, le plafond ne bouge pas */
+    font: 700 clamp(.62rem, 1vw, .72rem)/1.2 var(--f-body);
     text-transform: uppercase;
     letter-spacing: .04em;
     color: #fff;
@@ -171,7 +172,7 @@
 
 .activity-pin.planned-current::after {
     inset: -3px;
-    box-shadow: 0 0 0 4px var(--parcours), 0 0 20px 7px rgba(99, 102, 241, .95), 0 0 44px 13px rgba(67, 56, 202, .75);
+    box-shadow: 0 0 0 3px var(--parcours), 0 0 16px 5px rgba(99, 102, 241, .95), 0 0 34px 9px rgba(67, 56, 202, .75);
     animation-duration: 1.4s;
 }
 
@@ -221,8 +222,8 @@
 .activity-pin.planned-current {
     background: var(--parcours);
     border: 3px solid #fff;
-    width: clamp(16px, 2.6vw, 28px);
-    height: clamp(16px, 2.6vw, 28px);
+    width: clamp(13px, 2vw, 20px);
+    height: clamp(13px, 2vw, 20px);
     box-shadow: none;
     z-index: 8;
 }
