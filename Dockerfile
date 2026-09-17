@@ -2,6 +2,9 @@ FROM dunglas/frankenphp:php8.4
 
 RUN install-php-extensions pdo_mysql intl zip gd opcache
 
+# sans ça php est en utc : une notif programmée à 14h partirait à 16h
+RUN printf 'date.timezone=Europe/Paris\n' > "$PHP_INI_DIR/conf.d/klask.ini"
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app

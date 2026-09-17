@@ -1,6 +1,8 @@
 services:
   app:
     build: .
+    # tag partagé avec worker : une seule image, impossible qu'ils divergent
+    image: klask-app
     restart: unless-stopped
     env_file: .env.local
     environment:
@@ -27,9 +29,14 @@ services:
 
   worker:
     build: .
+    image: klask-app
     restart: unless-stopped
     env_file: .env.local
     command: php bin/console messenger:consume scheduler_default --time-limit=3600
+    # celui de l'image teste un serveur http que le worker n'expose pas : toujours faux
+    # un worker mort se voit à son statut Restarting
+    healthcheck:
+      disable: true
     depends_on:
       db:
         condition: service_healthy
