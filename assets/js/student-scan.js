@@ -53,6 +53,8 @@ async function openScanner() {
             () => {},
         );
     } catch {
+        // la caméra n'a pas démarré : sans ça closeScanner appelle stop() et la croix ne ferme rien
+        scanner = null;
         setMsg(
             "Accès caméra refusé. Utilise l'appareil photo natif pour scanner le QR.",
         );

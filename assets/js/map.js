@@ -29,6 +29,12 @@ function createSphere(sphere) {
     el.className = "sphere-zone" + cls;
     el.dataset.activityIds = sphere.activities.map((a) => a.id).join(",");
     el.style.cssText = sphereStyle(sphere.color, sphere);
+    // le libellé fuit les activités : elles en bas → libellé en haut, et inversement
+    const ys = sphere.activities.map((a) => a.pointYActivity);
+    if (ys.length) {
+        const bas = ys.reduce((s, y) => s + y, 0) / ys.length > sphere.centerY;
+        el.classList.add(bas ? "sphere-label--haut" : "sphere-label--bas");
+    }
     el.append(
         Object.assign(document.createElement("span"), {
             className: "sphere-label",
@@ -660,17 +666,21 @@ document
         return area.clientWidth < 768 ? Math.max(sx, sy) : Math.min(sx, sy);
     }
 
+    // bornes calculées sur le cadre dessiné, pas sur le webp : sinon on peut se déplacer
+    // dans la marge blanche, très visible sur mobile où le plan déborde de l'écran
     function clampPan() {
-        const w = canvas.offsetWidth * scale,
-            h = canvas.offsetHeight * scale;
+        const w = canvas.offsetWidth * PLAN.w * scale,
+            h = canvas.offsetHeight * PLAN.h * scale,
+            ox = canvas.offsetWidth * PLAN.x * scale,
+            oy = canvas.offsetHeight * PLAN.y * scale;
         tx =
             w <= area.clientWidth
-                ? (area.clientWidth - w) / 2
-                : Math.min(0, Math.max(area.clientWidth - w, tx));
+                ? (area.clientWidth - w) / 2 - ox
+                : Math.min(-ox, Math.max(area.clientWidth - w - ox, tx));
         ty =
             h <= area.clientHeight
-                ? (area.clientHeight - h) / 2
-                : Math.min(0, Math.max(area.clientHeight - h, ty));
+                ? (area.clientHeight - h) / 2 - oy
+                : Math.min(-oy, Math.max(area.clientHeight - h - oy, ty));
     }
 
     function applyTransform() {
