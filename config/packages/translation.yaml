@@ -1,5 +1,6 @@
 framework:
-    default_locale: en
+    # sinon les messages des bundles restent en anglais : « 1 hour » au lieu de « 1 heure »
+    default_locale: fr
     translator:
         default_path: '%kernel.project_dir%/translations'
         providers:
