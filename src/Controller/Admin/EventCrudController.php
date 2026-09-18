@@ -60,7 +60,10 @@ class EventCrudController extends AbstractCrudController
 
         return $actions
             ->add(Crud::PAGE_INDEX, $reset)
-            ->add(Crud::PAGE_DETAIL, $reset);
+            ->add(Crud::PAGE_DETAIL, $reset)
+            // les groupes référencent l'event : la suppression échoue toujours, et le bouton
+            // est voisin de « Réinitialiser » depuis l'affichage en ligne
+            ->disable(Action::DELETE);
     }
 
     /** @param AdminContext<Event> $context */
