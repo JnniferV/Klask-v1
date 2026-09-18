@@ -106,14 +106,22 @@
 }
 
 .sphere-label {
-    /* plancher relevé : sur mobile c'est lui qui s'applique, le plafond ne bouge pas */
-    font: 700 clamp(.62rem, 1vw, .72rem)/1.2 var(--f-body);
+    font: 700 clamp(.5rem, 1vw, .68rem)/1.2 var(--f-body);
     text-transform: uppercase;
     letter-spacing: .04em;
     color: #fff;
     text-shadow: 0 1px 4px rgba(0, 0, 0, .5);
     text-align: center;
     padding: 0 4px;
+}
+
+/* marge en % de la largeur = de la hauteur (aspect-ratio 1) : décale le libellé d'un quart de sphère */
+.sphere-label--haut .sphere-label {
+    margin-bottom: 46%;
+}
+
+.sphere-label--bas .sphere-label {
+    margin-top: 46%;
 }
 
 .sphere-zone--muted {
