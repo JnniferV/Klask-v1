@@ -106,7 +106,7 @@
 }
 
 .sphere-label {
-    font: 700 clamp(.5rem, 1vw, .68rem)/1.2 var(--f-body);
+    font: 700 clamp(.45rem, 1vw, .68rem)/1.2 var(--f-body);
     text-transform: uppercase;
     letter-spacing: .04em;
     color: #fff;
