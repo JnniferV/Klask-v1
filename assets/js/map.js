@@ -654,8 +654,9 @@ document
         touchOriginTy = 0;
 
     // cadre réellement dessiné dans le webp du plan : le reste est de la marge blanche
-    // (mesuré sur `cartes claire.webp` — x 18,7-81,2 %, y 12,1-94,3 %)
-    const PLAN = { x: 0.187, y: 0.121, w: 0.625, h: 0.822 };
+    // (mesuré sur `cartes claire.webp` — x 18,7-81,2 %, y 12,1-96,1 %)
+    // le bas descend jusqu'à 96 % : les flèches ENTRÉE y sont, elles étaient rognées
+    const PLAN = { x: 0.187, y: 0.121, w: 0.625, h: 0.84 };
 
     function computeMinScale() {
         if (!canvas.offsetHeight) return 0.3;
