@@ -19,7 +19,6 @@ class EasyAdminUserSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            // On écoute l'événement "Juste avant d'enregistrer en BDD" d'EasyAdmin
             BeforeEntityPersistedEvent::class => ['sendCredentialsAndHashPassword'],
         ];
     }
@@ -28,19 +27,16 @@ class EasyAdminUserSubscriber implements EventSubscriberInterface
     {
         $entity = $event->getEntityInstance();
 
-        // On vérifie que l'entité créée est bien un Utilisateur (Accompagnateur)
         if (!$entity instanceof User) {
             return;
         }
+        $groupCode = $entity->getGroup()?->getCode() ?? 'Aucun groupe assigné';
 
-        $plainPassword = $entity->getPlainPassword();
+        $plainPassword = $entity->getPassword();
 
-        // Si un mot de passe en clair a été saisi
         if ($plainPassword) {
-
-            // ENVOI DE L'EMAIL (Avant le hachage !)
             $email = (new Email())
-                ->from('info@klask.app')
+                ->from('info@klask.app') // Mis à jour avec la bonne adresse
                 ->to($entity->getEmail())
                 ->subject('Vos identifiants KLASK')
                 ->html("
@@ -49,19 +45,19 @@ class EasyAdminUserSubscriber implements EventSubscriberInterface
                     <ul>
                         <li><strong>Email :</strong> {$entity->getEmail()}</li>
                         <li><strong>Mot de passe :</strong> {$plainPassword}</li>
-                        <li><strong>Code Groupe :</strong> {$entity->getGroupCode()}</li>
+                        <li><strong>Code Groupe :</strong> {$groupCode}</li>
                     </ul>
                     <p>Bon événement !</p>
                 ");
 
             $this->mailer->send($email);
 
-            //  HACHAGE DU MOT DE PASSE (Pour la sécurité de la BDD)
+            // On hache le mot de passe en clair récupéré
             $hashedPassword = $this->passwordHasher->hashPassword($entity, $plainPassword);
-            $entity->setPassword($hashedPassword);
 
-            // On efface le mot de passe en clair de la mémoire par sécurité
-            $entity->setPlainPassword(null);
+            // COn écrase le mot de passe en clair par le hachage
+
+            $entity->setPassword($hashedPassword);
         }
     }
 }
