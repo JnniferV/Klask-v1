@@ -1,0 +1,24 @@
+{% extends '@EasyAdmin/page/content.html.twig' %}
+
+{% block page_title %}QR codes à imprimer{% endblock %}
+
+{% block main %}
+<p class="qr-hint">Un qr par page.</p>
+
+<div class="qr-sheets">
+    {% for activity in activities|filter(a => a.qrcode) %}
+        <div class="qr-sheet">
+            <img src="/{{ activity.qrcode }}" alt="QR code — {{ activity.name }}">
+            {% if activity.category and activity.category.type in scheduledTypes %}
+                <p class="qr-sheet__meta">{{ activity.category.type }}</p>
+            {% endif %}
+            <p class="qr-sheet__name">{{ activity.name }}</p>
+            {% if activity.sphere %}
+                <p class="qr-sheet__meta">{{ activity.sphere.name }}</p>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>Aucun QR code généré. Rechargez les fixtures ou créez une activité.</p>
+    {% endfor %}
+</div>
+{% endblock %}
