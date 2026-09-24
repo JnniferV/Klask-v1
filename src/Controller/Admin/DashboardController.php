@@ -2,6 +2,8 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\ActivityCategory;
+use App\Repository\ActivityRepository;
 use App\Repository\AppParameterRepository;
 use App\Repository\GroupRepository;
 use App\Repository\ScanRepository;
@@ -38,6 +40,7 @@ class DashboardController extends AbstractDashboardController
 
     public function __construct(
         private readonly AdminUrlGenerator $urlGenerator,
+        private readonly ActivityRepository $activityRepository,
         private readonly UserRepository $userRepository,
         private readonly GroupRepository $groupRepository,
         private readonly ScanRepository $scanRepository,
@@ -67,6 +70,16 @@ class DashboardController extends AbstractDashboardController
                 'events' => $g->setController(EventCrudController::class)->setAction(Action::INDEX)->generateUrl(),
                 'notifications' => $g->setController(NotificationCrudController::class)->setAction(Action::INDEX)->generateUrl(),
             ],
+        ]);
+    }
+
+    // les qr à imprimer, un par page avec le nom
+    #[AdminRoute(path: '/qrcodes', name: 'qrcodes')]
+    public function qrcodes(): Response
+    {
+        return $this->render('admin/qrcodes.html.twig', [
+            'activities' => $this->activityRepository->findBy([], ['name' => 'ASC']),
+            'scheduledTypes' => ActivityCategory::SCHEDULED_TYPES,
         ]);
     }
 
@@ -153,6 +166,7 @@ class DashboardController extends AbstractDashboardController
         yield MenuItem::linkTo(SphereCrudController::class, 'Sphères', 'fa fa-circle');
         yield MenuItem::linkTo(ActivityCrudController::class, 'Activités / Stands', 'fa fa-star');
         yield MenuItem::linkTo(ActivityCategoryCrudController::class, 'Catégories', 'fa fa-tag');
+        yield MenuItem::linkToRoute('QR codes à imprimer', 'fa fa-print', 'admin_qrcodes');
 
         yield MenuItem::section('Event');
         yield MenuItem::linkTo(EventCrudController::class, 'Events', 'fa fa-calendar');
