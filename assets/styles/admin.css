@@ -1,3 +1,58 @@
+.qr-hint {
+    margin: 0 0 1.5rem;
+    color: var(--c-muted);
+}
+
+.qr-sheet {
+    text-align: center;
+    margin: 0 auto 3rem;
+    max-width: 420px;
+    page-break-after: always;
+}
+
+.qr-sheet img {
+    width: 100%;
+    height: auto;
+}
+
+.qr-sheet__name {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin: .5rem 0 .25rem;
+}
+
+.qr-sheet__meta {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* masque le menu et l'entête easyadmin sans dépendre de leurs classes */
+@media print {
+
+    body * {
+        visibility: hidden;
+    }
+
+    .qr-sheets,
+    .qr-sheets * {
+        visibility: visible;
+    }
+
+    .qr-sheets {
+        position: absolute;
+        inset: 0;
+    }
+
+    /* 100vh = la hauteur de la page imprimée : le contenu se cale au milieu */
+    .qr-sheet {
+        margin: 0 auto;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+}
+
 .placement-wrap {
     max-width: 900px;
     margin: 2rem auto;
