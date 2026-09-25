@@ -1,3 +1,11 @@
+/* svh = hauteur hors barre du navigateur : elle ne fait plus bouger la carte */
+.page-map {
+    height: 100vh;
+    height: 100svh;
+    min-height: 0;
+    overflow: hidden;
+}
+
 .page-map main {
     padding: 0;
     overflow: hidden;
@@ -106,7 +114,8 @@
 }
 
 .sphere-label {
-    font: 700 clamp(.45rem, 1vw, .68rem)/1.2 var(--f-body);
+    /* plancher bas : sur mobile le plan est agrandi, le libellé suivait pas la sphère */
+    font: 700 clamp(.28rem, 1vw, .68rem)/1.2 var(--f-body);
     text-transform: uppercase;
     letter-spacing: .04em;
     color: #fff;
@@ -132,7 +141,7 @@
 .sphere-zone--priority {
     opacity: .92;
     border-color: rgba(255, 255, 255, .6);
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, .35), 0 4px 16px rgba(0, 0, 0, .14);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .14);
     z-index: 2;
 }
 
@@ -170,17 +179,17 @@
 }
 
 .sphere-zone--priority::after {
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, .45), 0 0 32px 10px var(--c);
+    box-shadow: 0 0 32px 10px var(--c);
 }
 
 .sphere-zone--current::after {
-    box-shadow: 0 0 0 5px rgba(255, 255, 255, .8), 0 0 62px 22px var(--c), 0 0 110px 38px var(--c);
+    box-shadow: 0 0 62px 22px var(--c), 0 0 110px 38px var(--c);
     animation-duration: 1.6s;
 }
 
 .activity-pin.planned-current::after {
     inset: -3px;
-    box-shadow: 0 0 0 3px var(--parcours), 0 0 16px 5px rgba(99, 102, 241, .95), 0 0 34px 9px rgba(67, 56, 202, .75);
+    box-shadow: 0 0 16px 5px rgba(99, 102, 241, .95), 0 0 34px 9px rgba(67, 56, 202, .75);
     animation-duration: 1.4s;
 }
 
@@ -653,6 +662,7 @@
     width: 100%;
     max-width: 480px;
     max-height: 94vh;
+    max-height: 94svh;
     display: flex;
     flex-direction: column;
     border: 6px solid transparent;
