@@ -14,12 +14,14 @@ final readonly class ScanResult
         public int $activityId,
         public int $userScore,
         public int $groupScore,
+        // prochaine étape choisie par le serveur, 0 si aucune
+        public int $nextStepId = 0,
     ) {
     }
 
-    public static function valide(int $points, int $bonus, string $activityName, int $activityId, int $userScore, int $groupScore): self
+    public static function valide(int $points, int $bonus, string $activityName, int $activityId, int $userScore, int $groupScore, int $nextStepId): self
     {
-        return new self(true, null, null, $points, $bonus, $activityName, $activityId, $userScore, $groupScore);
+        return new self(true, null, null, $points, $bonus, $activityName, $activityId, $userScore, $groupScore, $nextStepId);
     }
 
     public static function refus(string $error, ?string $code, string $activityName, int $activityId, int $userScore, int $groupScore): self
