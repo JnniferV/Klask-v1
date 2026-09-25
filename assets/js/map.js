@@ -240,7 +240,8 @@ function renderParcoursPath(coordsMap) {
 }
 
 // mise à jour de l'état parcours
-window.addEventListener("klask:pinDone", ({ detail: { activityId } }) => {
+window.addEventListener("klask:pinDone", ({ detail }) => {
+    const { activityId, nextStepId } = detail;
     // toujours mémoriser le dernier scan comme début de la flèche
     lastScannedId = activityId;
     SCANNED.add(activityId);
@@ -249,13 +250,12 @@ window.addEventListener("klask:pinDone", ({ detail: { activityId } }) => {
     const entry = PARCOURS_MAP.get(activityId);
     if (entry) {
         entry.done = true;
-        entry.current = false;
 
-        let newCurrent = null;
-        for (const p of PARCOURS) {
-            p.current = !p.done && newCurrent === null;
-            if (p.current) newCurrent = p;
-        }
+        // le serveur donne l'étape suivante, sinon la première non faite
+        const newCurrent =
+            PARCOURS.find((p) => !p.done && p.id === nextStepId) ??
+            PARCOURS.find((p) => !p.done);
+        for (const p of PARCOURS) p.current = p === newCurrent;
 
         // MAJ classes DOM du pin scanné
         const donePin = document.getElementById("pin-" + activityId);

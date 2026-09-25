@@ -112,7 +112,7 @@ async function flushQueue() {
             const data = await submitScan(token);
             if (data.ok) {
                 updateScores(data);
-                updateParcoursPin(data.activityId);
+                updateParcoursPin(data);
             }
         } catch {
             remaining.push({ token });
@@ -139,7 +139,7 @@ async function processToken(raw) {
                     " ✓",
             );
             updateScores(data);
-            updateParcoursPin(data.activityId);
+            updateParcoursPin(data);
             setTimeout(closeScanner, 2200);
         } else {
             setMsg(data.error ?? "Erreur.");
@@ -166,10 +166,10 @@ function updateScores(data) {
         groupe.textContent = data.groupScore;
 }
 
-function updateParcoursPin(activityId) {
+function updateParcoursPin({ activityId, nextStepId }) {
     // délègue la MAJ DOM + flèche à map.js
     window.dispatchEvent(
-        new CustomEvent("klask:pinDone", { detail: { activityId } }),
+        new CustomEvent("klask:pinDone", { detail: { activityId, nextStepId } }),
     );
 }
 
