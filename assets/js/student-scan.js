@@ -28,8 +28,9 @@ async function openScanner() {
         '<p id="scan-msg" class="scan-msg">Pointez sur le QR Code…</p>' +
         "</div>";
     document.body.appendChild(overlay);
-    document
-        .getElementById("scan-close")
+    // querySelector sur l'overlay : getElementById viserait un ancien overlay resté en place
+    overlay
+        .querySelector("#scan-close")
         .addEventListener("click", closeScanner);
 
     try {
@@ -178,10 +179,13 @@ function setMsg(msg) {
 }
 
 async function closeScanner() {
-    if (scanner) {
-        await scanner.stop().catch(() => {});
-        scanner.clear();
-        scanner = null;
-    }
+    // l'overlay part d'abord : stop() lève quand la caméra n'a jamais démarré et bloquait la croix
+    const actif = scanner;
+    scanner = null;
     document.getElementById("scan-overlay")?.remove();
+
+    try {
+        await actif?.stop();
+        actif?.clear();
+    } catch {}
 }
