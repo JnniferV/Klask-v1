@@ -15,42 +15,18 @@ class ParcoursRepository extends ServiceEntityRepository
         parent::__construct($registry, Parcours::class);
     }
 
-    /** @return array<int, array{activityId: int, stepOrder: int, isAvailable: string, priority: int}> */
+    /** @return array<int, array{activityId: int, stepOrder: int, isAvailable: string, priority: int, sphereId: ?int}> */
     public function findOrderedByUser(User $user): array
     {
         return $this->createQueryBuilder('p')
-            ->select('IDENTITY(p.activity) AS activityId', 'p.stepOrder', 'a.isAvailable', 'p.priority')
+            // sphereId sert à mesurer la charge de la sphère
+            ->select('IDENTITY(p.activity) AS activityId', 'p.stepOrder', 'a.isAvailable', 'p.priority', 'IDENTITY(a.sphere) AS sphereId')
             ->join('p.activity', 'a')
             ->where('p.user = :user')
             ->setParameter('user', $user)
             ->orderBy('p.stepOrder', 'ASC')
             ->getQuery()
             ->getScalarResult();
-    }
-
-    /**
-     * @param int[] $sphereIds
-     *
-     * @return array<int, int>
-     */
-    public function countStudentsPerSphereAtStep(array $sphereIds, int $step): array
-    {
-        if (empty($sphereIds)) {
-            return [];
-        }
-
-        $rows = $this->createQueryBuilder('p')
-            ->select('IDENTITY(a.sphere) AS sphereId', 'COUNT(p.id) AS cnt')
-            ->join('p.activity', 'a')
-            ->where('p.stepOrder = :step')
-            ->andWhere('a.sphere IN (:sids)')
-            ->setParameter('step', $step)
-            ->setParameter('sids', $sphereIds)
-            ->groupBy('a.sphere')
-            ->getQuery()
-            ->getScalarResult();
-
-        return array_column($rows, 'cnt', 'sphereId');
     }
 
     public function deleteByUser(User $user): void

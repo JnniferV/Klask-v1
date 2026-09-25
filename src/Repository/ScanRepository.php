@@ -45,6 +45,23 @@ class ScanRepository extends ServiceEntityRepository
         return array_map('intval', array_column($rows, 'cnt', 'activityId'));
     }
 
+    // même fenêtre que par activité, mais regroupée par sphère
+    /** @return array<int, int> */
+    public function countRecentGroupedBySphere(): array
+    {
+        $rows = $this->createQueryBuilder('s')
+            ->select('IDENTITY(a.sphere) AS sphereId', 'COUNT(s.id) AS cnt')
+            ->join('s.activity', 'a')
+            ->where('s.hourValidation >= :since')
+            ->andWhere('a.sphere IS NOT NULL')
+            ->setParameter('since', new \DateTimeImmutable('-'.self::OCCUPANCY_WINDOW_MIN.' minutes'))
+            ->groupBy('a.sphere')
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_map('intval', array_column($rows, 'cnt', 'sphereId'));
+    }
+
     public function existsForUserAndActivity(User $user, Activity $activity): bool
     {
         return (bool) $this->createQueryBuilder('s')
