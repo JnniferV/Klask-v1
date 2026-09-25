@@ -35,7 +35,7 @@
 
         <div class="block-actions">
             {% if bilan.isPdfUnlocked %}
-                <p>Parcours validé — tu peux télécharger ton bilan PDF.</p>
+                <p>Tu as accès au téléchargement de ton bilan. Attends la fin de l'événement et de tes activités avant de le télécharger — tu retrouveras ce lien à tout moment dans le panneau latéral, sur «&nbsp;MON BILAN&nbsp;».</p>
                 <a href="{{ path('app_bilan_eleve_pdf') }}" class="btn-continuer">Télécharger mon bilan PDF</a>
             {% else %}
                 <p>PDF verrouillé : visite au moins 3 stands ou continue l'exploration pendant 1 heure.</p>
