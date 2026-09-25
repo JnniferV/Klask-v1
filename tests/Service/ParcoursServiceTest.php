@@ -34,7 +34,6 @@ class ParcoursServiceTest extends TestCase
         $this->scanRepository = $this->createStub(ScanRepository::class);
         $this->persisted = [];
 
-        $this->parcoursRepository->method('countStudentsPerSphereAtStep')->willReturn([]);
         $this->scanRepository->method('findActivityIdsByUser')->willReturn([]);
         $this->activityRepository->method('findScheduledActivities')->willReturn([]);
     }
@@ -132,9 +131,9 @@ class ParcoursServiceTest extends TestCase
     public function testLeCheminMarqueLesEtapesFaitesEtLEtapeCourante(): void
     {
         $this->parcoursRepository->method('findOrderedByUser')->willReturn([
-            ['activityId' => 1, 'stepOrder' => 1, 'isAvailable' => '1'],
-            ['activityId' => 2, 'stepOrder' => 2, 'isAvailable' => '1'],
-            ['activityId' => 3, 'stepOrder' => 3, 'isAvailable' => '1'],
+            ['activityId' => 1, 'stepOrder' => 1, 'isAvailable' => '1', 'priority' => 1, 'sphereId' => 10],
+            ['activityId' => 2, 'stepOrder' => 2, 'isAvailable' => '1', 'priority' => 1, 'sphereId' => 10],
+            ['activityId' => 3, 'stepOrder' => 3, 'isAvailable' => '1', 'priority' => 2, 'sphereId' => 20],
         ]);
         $scanRepository = $this->createStub(ScanRepository::class);
         $scanRepository->method('findActivityIdsByUser')->willReturn([1]);
@@ -152,8 +151,8 @@ class ParcoursServiceTest extends TestCase
     public function testUneEtapeIndisponibleEstIgnoreePourLEtapeCourante(): void
     {
         $this->parcoursRepository->method('findOrderedByUser')->willReturn([
-            ['activityId' => 1, 'stepOrder' => 1, 'isAvailable' => '0'],
-            ['activityId' => 2, 'stepOrder' => 2, 'isAvailable' => '1'],
+            ['activityId' => 1, 'stepOrder' => 1, 'isAvailable' => '0', 'priority' => 1, 'sphereId' => 10],
+            ['activityId' => 2, 'stepOrder' => 2, 'isAvailable' => '1', 'priority' => 1, 'sphereId' => 10],
         ]);
 
         $path = $this->service()->getPathForMap(EntityBuilder::student());
@@ -165,13 +164,51 @@ class ParcoursServiceTest extends TestCase
     public function testSiToutEstIndisponibleLaPremiereEtapeNonFaiteResteCourante(): void
     {
         $this->parcoursRepository->method('findOrderedByUser')->willReturn([
-            ['activityId' => 1, 'stepOrder' => 1, 'isAvailable' => '0'],
-            ['activityId' => 2, 'stepOrder' => 2, 'isAvailable' => '0'],
+            ['activityId' => 1, 'stepOrder' => 1, 'isAvailable' => '0', 'priority' => 1, 'sphereId' => 10],
+            ['activityId' => 2, 'stepOrder' => 2, 'isAvailable' => '0', 'priority' => 1, 'sphereId' => 10],
         ]);
 
         $path = $this->service()->getPathForMap(EntityBuilder::student());
 
         $this->assertTrue($path['steps'][0]['current']);
+    }
+
+    public function testUneSphereSatureeFaitPasserALaSuivanteDuTop3(): void
+    {
+        $this->parcoursRepository->method('findOrderedByUser')->willReturn([
+            ['activityId' => 1, 'stepOrder' => 1, 'isAvailable' => '1', 'priority' => 1, 'sphereId' => 10],
+            ['activityId' => 2, 'stepOrder' => 2, 'isAvailable' => '1', 'priority' => 2, 'sphereId' => 20],
+        ]);
+        $this->scanRepository = $this->chargeSpheres([10 => 100]);
+
+        $path = $this->service()->getPathForMap(EntityBuilder::student());
+
+        $this->assertFalse($path['steps'][0]['current']);
+        $this->assertTrue($path['steps'][1]['current'], 'Sphère 10 pleine : on passe à la suivante du top 3.');
+    }
+
+    public function testQuandToutLeTop3EstSatureOnViseLaSphereLaMoinsChargee(): void
+    {
+        $this->parcoursRepository->method('findOrderedByUser')->willReturn([
+            ['activityId' => 1, 'stepOrder' => 1, 'isAvailable' => '1', 'priority' => 1, 'sphereId' => 10],
+            ['activityId' => 2, 'stepOrder' => 2, 'isAvailable' => '1', 'priority' => 2, 'sphereId' => 20],
+            ['activityId' => 3, 'stepOrder' => 3, 'isAvailable' => '1', 'priority' => 3, 'sphereId' => 30],
+        ]);
+        $this->scanRepository = $this->chargeSpheres([10 => 150, 20 => 120, 30 => 110]);
+
+        $path = $this->service()->getPathForMap(EntityBuilder::student());
+
+        $this->assertTrue($path['steps'][2]['current'], 'Rien n\'est imposé : on vise la sphère la moins chargée du top 3.');
+    }
+
+    /** @param array<int, int> $charge */
+    private function chargeSpheres(array $charge): ScanRepository&Stub
+    {
+        $repository = $this->createStub(ScanRepository::class);
+        $repository->method('findActivityIdsByUser')->willReturn([]);
+        $repository->method('countRecentGroupedBySphere')->willReturn($charge);
+
+        return $repository;
     }
 
     public function testCheminVideQuandAucunParcoursNEstGenere(): void
