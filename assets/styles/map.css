@@ -540,7 +540,8 @@
     padding-right: 34px;
     font: 700 1.05rem/1.45 var(--f-mono);
     animation: alertIn .5s ease;
-    word-break: break-word;
+    /* break-word et non word-break : ce dernier coupait « FÉLICITATIONS » sous 390px */
+    overflow-wrap: break-word;
     white-space: normal;
 }
 
