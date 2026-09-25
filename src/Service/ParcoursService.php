@@ -16,7 +16,6 @@ use Symfony\Contracts\Cache\ItemInterface;
 class ParcoursService
 {
     private const CACHE_TTL = 30;
-    private const CROWD_THRESHOLD = 30;
 
     public function __construct(
         private readonly ParcoursRepository $parcoursRepository,
@@ -50,11 +49,7 @@ class ParcoursService
         $offset = $user->getId() % $top3Count;
         $top3 = array_merge(array_slice($top3, $offset), array_slice($top3, 0, $offset));
 
-        $loadAtStep1 = $this->parcoursRepository->countStudentsPerSphereAtStep($top3, 1);
-        if (($loadAtStep1[$top3[0]] ?? 0) >= self::CROWD_THRESHOLD) {
-            usort($top3, fn (int $a, int $b) => ($loadAtStep1[$a] ?? 0) <=> ($loadAtStep1[$b] ?? 0));
-        }
-
+        // l'équilibrage se fait maintenant à l'affichage, sur la charge réelle
         $orderedIds = array_merge($top3, $bonus);
 
         $grouped = $this->activityRepository->findStandsBySpheres($orderedIds);
@@ -110,35 +105,20 @@ class ParcoursService
         }
 
         $doneIds = array_flip($scannedIds);
-        $currentFound = false;
         $result = [];
 
         foreach ($rows as $row) {
             $id = (int) $row['activityId'];
-            $done = isset($doneIds[$id]);
-            $available = (bool) (int) $row['isAvailable'];
-
-            $current = !$done && !$currentFound && $available;
-            if ($current) {
-                $currentFound = true;
-            }
-            $result[] = ['step' => (int) $row['stepOrder'], 'id' => $id, 'current' => $current, 'done' => $done];
+            $result[] = ['step' => (int) $row['stepOrder'], 'id' => $id, 'current' => false, 'done' => isset($doneIds[$id])];
         }
 
-        if (!$currentFound) {
-            foreach ($result as &$entry) {
-                if (!$entry['done']) {
-                    $entry['current'] = true;
-                    break;
-                }
-            }
-            unset($entry);
-        }
+        $currentIdx = $this->pickCurrentIndex($rows, $result);
+        if (null !== $currentIdx) {
+            $result[$currentIdx]['current'] = true;
 
-        $urgent = $this->findUrgentActivity($doneIds);
-        if (null !== $urgent) {
-            $currentIdx = array_search(true, array_column($result, 'current'));
-            if (false !== $currentIdx) {
+            // l'atelier imminent se glisse juste après l'étape en cours
+            $urgent = $this->findUrgentActivity($doneIds);
+            if (null !== $urgent) {
                 array_splice($result, $currentIdx + 1, 0, [[
                     'step' => 0,
                     'id' => (int) $urgent->getId(),
@@ -150,6 +130,65 @@ class ParcoursService
         }
 
         return ['steps' => $result, 'scannedIds' => $scannedIds];
+    }
+
+    /**
+     * @param array<int, array{activityId: int, stepOrder: int, isAvailable: string, priority: int, sphereId: ?int}> $rows
+     * @param array<int, array{step: int, id: int, current: bool, done: bool}>                                       $result
+     */
+    private function pickCurrentIndex(array $rows, array $result): ?int
+    {
+        $libres = [];
+        foreach ($rows as $i => $row) {
+            if (!$result[$i]['done'] && (bool) (int) $row['isAvailable']) {
+                $libres[$i] = $row;
+            }
+        }
+
+        // plus rien de libre : on garde la première étape non faite
+        if (!$libres) {
+            foreach ($result as $i => $entry) {
+                if (!$entry['done']) {
+                    return $i;
+                }
+            }
+
+            return null;
+        }
+
+        // tant qu'il reste des stands des 3 sphères préférées, on n'en sort pas
+        $pool = array_filter($libres, static fn (array $r): bool => $r['priority'] >= 1 && $r['priority'] <= 3) ?: $libres;
+
+        $charge = $this->chargeParSphere();
+        $max = $this->params->getInt('MAX_STUDENTS_PER_SPHERE', 100);
+
+        // première étape dont la sphère a encore de la place
+        foreach ($pool as $i => $row) {
+            if (($charge[(int) $row['sphereId']] ?? 0) < $max) {
+                return $i;
+            }
+        }
+
+        // tout est saturé : on n'impose rien, on vise la sphère la moins chargée
+        $best = null;
+        foreach ($pool as $i => $row) {
+            if (null === $best || ($charge[(int) $row['sphereId']] ?? 0) < ($charge[(int) $pool[$best]['sphereId']] ?? 0)) {
+                $best = $i;
+            }
+        }
+
+        return $best;
+    }
+
+    // une seule requête pour tout le monde, rafraîchie comme les parcours
+    /** @return array<int, int> */
+    private function chargeParSphere(): array
+    {
+        return $this->cache->get('parcours.charge.spheres', function (ItemInterface $item): array {
+            $item->expiresAfter(self::CACHE_TTL);
+
+            return $this->scanRepository->countRecentGroupedBySphere();
+        });
     }
 
     /** @param array<int, int> $doneIds */

@@ -114,7 +114,21 @@ class ScanService
             (int) $activity->getId(),
             $user->getScore() ?? 0,
             $group?->getScore() ?? 0,
+            $this->nextStepId($user),
         );
+    }
+
+    // le serveur connaît la charge des sphères, pas le front
+    private function nextStepId(User $user): int
+    {
+        // le cache renvoie du mixed : pas d'étapes, pas d'étape suivante
+        foreach ($this->parcoursService->getPathForMap($user)['steps'] ?? [] as $step) {
+            if ($step['current']) {
+                return $step['id'];
+            }
+        }
+
+        return 0;
     }
 
     private function resolvePoints(User $user, Activity $activity): int
