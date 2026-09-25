@@ -70,6 +70,12 @@ class AppParameterFixtures extends Fixture
             'description' => 'Remplace la carte interactive par la carte évacuation/sorties de secours.',
         ],
         [
+            'key' => 'MAX_STUDENTS_PER_SPHERE',
+            'value' => '100',
+            'type' => 'integer',
+            'description' => 'Nombre d\'élèves récemment scannés dans une sphère au-delà duquel on propose une autre sphère. Indicatif : l\'élève reste libre.',
+        ],
+        [
             'key' => 'INACTIVITY_MINUTES',
             'value' => '25',
             'type' => 'integer',

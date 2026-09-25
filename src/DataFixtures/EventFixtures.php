@@ -8,13 +8,11 @@ use Doctrine\Persistence\ObjectManager;
 
 class EventFixtures extends Fixture
 {
-    public const EVENT_MORNING = 'event_matin';
     public const EVENT_AFTERNOON = 'event_apres_midi';
 
-    // les deux sessions, classes rattachées par GroupFixtures
+    // session unique : la 3ᵉ et au-dessus viennent tous l'après-midi
     /** @var array<string, array{0: string, 1: string, 2: string}> */
     private const EVENTS = [
-        self::EVENT_MORNING => ['Klask 2026 — Matin (avant la 3ᵉ)', '09:00', '12:30'],
         self::EVENT_AFTERNOON => ['Klask 2026 — Après-midi (3ᵉ et +)', '13:00', '17:00'],
     ];
 

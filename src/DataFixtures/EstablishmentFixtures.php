@@ -10,18 +10,15 @@ class EstablishmentFixtures extends Fixture
 {
     public const ESTABLISHMENT_REFERENCE = 'establishment';
 
-    // établissements inscrits, noms tels que saisis
+    // établissements inscrits, écriture uniformisée : initiale en majuscule
     /** @var list<string> */
     private const NAMES = [
-        // matin
-        'Primaire CM2', // nom réel non communiqué, provisoire
         'Collège Germain Pensivy / Rosporden',
-        'La Tourelle',
-        // après-midi, Le Porzou est sur les deux sessions
-        'collège Le Porzou',
-        'collège François Collobert',
+        'Collège La Tourelle',
+        'Collège Le Porzou',
+        'Collège François Collobert',
         'Collège St Michel',
-        'LYCÉE BRIZEUX',
+        'Lycée Brizeux',
         'Le Likès La Salle',
     ];
 
