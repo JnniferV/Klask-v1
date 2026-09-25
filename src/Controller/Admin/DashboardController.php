@@ -35,6 +35,7 @@ class DashboardController extends AbstractDashboardController
         'Événements' => ['ALERT_BEFORE_EVENT_MIN'],
         'Points' => ['BONUS_TOP3_SPHERES', 'BONUS_ALL_SPHERES', 'BONUS_MAX_SCORE'],
         'Capacité stands' => ['SOFT_CAPACITY_MARGIN'],
+        'Sphères' => ['MAX_STUDENTS_PER_SPHERE'],
         'Carte' => ['ALERT_MAP_ACTIVE'],
     ];
 
@@ -73,7 +74,7 @@ class DashboardController extends AbstractDashboardController
         ]);
     }
 
-    // les qr à imprimer, un par page avec le nom
+    // planches à imprimer : une activité par page, Ctrl+P suffit
     #[AdminRoute(path: '/qrcodes', name: 'qrcodes')]
     public function qrcodes(): Response
     {
