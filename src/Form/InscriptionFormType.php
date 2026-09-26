@@ -6,6 +6,7 @@ use App\Entity\Establishment;
 use App\Entity\User;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -16,7 +17,7 @@ use Symfony\Component\Validator\Constraints\Regex;
 /** @extends AbstractType<User> */
 class InscriptionFormType extends AbstractType
 {
-    /** Niveaux proposés à l'inscription (sans CM2 → Quatrième). */
+    // seuls niveaux présents le jour J
     private const INSCRIPTION_LEVELS = ['Troisième', 'Seconde', 'Première', 'Terminale'];
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
@@ -38,7 +39,7 @@ class InscriptionFormType extends AbstractType
                     new NotBlank(message: 'Veuillez sélectionner votre établissement.'),
                 ],
             ])
-            ->add('groupLevel', \Symfony\Component\Form\Extension\Core\Type\ChoiceType::class, [
+            ->add('groupLevel', ChoiceType::class, [
                 'label' => 'Ma classe',
                 'mapped' => false,
                 'placeholder' => '-- Sélectionnez votre classe --',
