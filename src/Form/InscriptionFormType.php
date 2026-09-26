@@ -3,7 +3,6 @@
 namespace App\Form;
 
 use App\Entity\Establishment;
-use App\Entity\Group;
 use App\Entity\User;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
@@ -17,6 +16,9 @@ use Symfony\Component\Validator\Constraints\Regex;
 /** @extends AbstractType<User> */
 class InscriptionFormType extends AbstractType
 {
+    /** Niveaux proposés à l'inscription (sans CM2 → Quatrième). */
+    private const INSCRIPTION_LEVELS = ['Troisième', 'Seconde', 'Première', 'Terminale'];
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -40,7 +42,7 @@ class InscriptionFormType extends AbstractType
                 'label' => 'Ma classe',
                 'mapped' => false,
                 'placeholder' => '-- Sélectionnez votre classe --',
-                'choices' => array_combine(Group::LEVELS, Group::LEVELS),
+                'choices' => array_combine(self::INSCRIPTION_LEVELS, self::INSCRIPTION_LEVELS),
                 'constraints' => [
                     new NotBlank(message: 'Veuillez sélectionner votre classe.'),
                 ],
