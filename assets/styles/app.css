@@ -223,9 +223,9 @@ input[type="submit"]:hover,
 .btn--ghost { background: none; color: var(--panel-txt); box-shadow: none; }
 .btn--ghost:not([disabled]):hover { border-color: var(--c-gold); }
 
-.avatar { display: inline-block; flex-shrink: 0; line-height: 0; aspect-ratio: 1; } /* inline-block hors flex */
-.avatar img { width: 100%; height: 100%; display: block; object-fit: contain; }
-.avatar--lg { width: clamp(220px, 52vw, 280px); }
+.avatar { display: inline-block; flex-shrink: 0; line-height: 0; aspect-ratio: 1; overflow: hidden; } /* inline-block hors flex */
+.avatar img { width: 100%; height: 100%; display: block; object-fit: cover; } /* rogne le vide du visuel */
+.avatar--lg { width: clamp(240px, 58vw, 310px); aspect-ratio: 1 / .7; }
 
 .resultat {
     padding: 10px 14px;

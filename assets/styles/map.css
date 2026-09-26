@@ -117,8 +117,9 @@
     font: 700 clamp(.28rem, 1vw, .68rem)/1.2 var(--f-body);
     text-transform: uppercase;
     letter-spacing: .04em;
-    color: #fff;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, .5);
+    /* sombre sur halo clair : le blanc passait mal sur orange et turquoise */
+    color: #222;
+    text-shadow: 0 1px 3px rgba(255, 255, 255, .75);
     text-align: center;
     padding: 0 4px;
     /* coupe le mot, le libellé reste dans sa sphère */
@@ -180,8 +181,10 @@
     }
 }
 
+/* les préférées restent visibles sans voler la vedette à la courante */
 .sphere-zone--priority::after {
-    box-shadow: 0 0 32px 10px var(--c);
+    box-shadow: 0 0 14px 2px var(--c);
+    opacity: .35;
 }
 
 /* la sphère à viser brille plus que les autres */

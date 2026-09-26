@@ -116,7 +116,8 @@
 }
 
 .avatar--md {
-    width: clamp(140px, 40vw, 175px);
+    width: clamp(165px, 46vw, 205px);
+    aspect-ratio: 1 / .7;
 }
 
 .avatar--sm {
