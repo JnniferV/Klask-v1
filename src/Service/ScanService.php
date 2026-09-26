@@ -102,7 +102,7 @@ class ScanService
             $this->notifier->publish('event-alert/user/'.$user->getPseudo(), [
                 'alert' => true,
                 'title' => 'Bilan débloqué !',
-                'message' => 'Tu peux télécharger ton bilan PDF.',
+                'message' => 'Ton bilan est débloqué. Si tu n\'as pas fini la visite, attends la fin avant de le télécharger — tu le trouveras en dessous de tes points !',
                 'type' => 'success',
             ]);
         }
@@ -121,7 +121,7 @@ class ScanService
     // le serveur connaît la charge des sphères, pas le front
     private function nextStepId(User $user): int
     {
-        // le cache renvoie du mixed : pas d'étapes, pas d'étape suivante
+        // pas d'étapes en cache, pas d'étape suivante
         foreach ($this->parcoursService->getPathForMap($user)['steps'] ?? [] as $step) {
             if ($step['current']) {
                 return $step['id'];

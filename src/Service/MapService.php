@@ -93,7 +93,7 @@ class MapService
     /**
      * @param array<int, int> $occupancy
      *
-     * @return array{id: ?int, name: string, pointXActivity: float, pointYActivity: float, descriptionActivity: string, isAvailable: bool, isInternship: bool, waitMinutes: ?int, capacity: string, sphereId: ?int, color: string, categoryType: string, basePoints: int}
+     * @return array{id: ?int, name: string, pointXActivity: float, pointYActivity: float, descriptionActivity: string, isAvailable: bool, isInternship: bool, isHighlighted: bool, waitMinutes: ?int, capacity: string, sphereId: ?int, color: string, categoryType: string, basePoints: int}
      */
     private function toArray(Activity $activity, array $occupancy, int $marginPct): array
     {
@@ -105,6 +105,7 @@ class MapService
             'descriptionActivity' => $activity->getDescription() ?? '',
             'isAvailable' => $activity->isAvailable(),
             'isInternship' => $activity->isInternship(),
+            'isHighlighted' => $activity->isHighlighted(),
             'waitMinutes' => $activity->getEstimatedWaitMinutes(),
             'capacity' => $this->capacityStatus($activity, $occupancy[$activity->getId()] ?? 0, $marginPct),
             'sphereId' => $activity->getSphere()?->getId(),
