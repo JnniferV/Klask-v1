@@ -114,7 +114,8 @@
 }
 
 .sphere-label {
-    font: 700 clamp(.28rem, 1vw, .68rem)/1.2 var(--f-body);
+    /* mobile = le 1er nombre, desktop = le 3e : baisse le 1er si c'est encore gros */
+    font: 700 clamp(.2rem, .8vw, .68rem)/1.2 var(--f-body);
     text-transform: uppercase;
     letter-spacing: .04em;
     /* sombre sur halo clair : le blanc passait mal sur orange et turquoise */
@@ -566,6 +567,15 @@
     /* break-word et non word-break : ce dernier coupait « FÉLICITATIONS » sous 390px */
     overflow-wrap: break-word;
     white-space: normal;
+}
+
+/* message allégé pour que le titre en gras ressorte */
+.event-alert-banner:has(strong) {
+    font-weight: 400;
+}
+
+.event-alert-banner strong {
+    font-weight: 700;
 }
 
 .poke-notif {
