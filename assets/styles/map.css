@@ -1,4 +1,4 @@
-/* svh = hauteur hors barre du navigateur : elle ne fait plus bouger la carte */
+/* svh : la barre du navigateur ne bouge plus rien */
 .page-map {
     height: 100vh;
     height: 100svh;
@@ -114,7 +114,6 @@
 }
 
 .sphere-label {
-    /* plancher bas : sur mobile le plan est agrandi, le libellé suivait pas la sphère */
     font: 700 clamp(.28rem, 1vw, .68rem)/1.2 var(--f-body);
     text-transform: uppercase;
     letter-spacing: .04em;
@@ -122,6 +121,8 @@
     text-shadow: 0 1px 4px rgba(0, 0, 0, .5);
     text-align: center;
     padding: 0 4px;
+    /* coupe le mot, le libellé reste dans sa sphère */
+    overflow-wrap: anywhere;
 }
 
 /* marge en % de la largeur = de la hauteur (aspect-ratio 1) : décale le libellé d'un quart de sphère */
@@ -161,7 +162,8 @@
 .sphere-zone--priority::after,
 .sphere-zone--current::after,
 .activity-pin.planned-current::after,
-.activity-pin.planned-urgent::after {
+.activity-pin.planned-urgent::after,
+.activity-pin.highlighted::after {
     content: "";
     position: absolute;
     inset: -1.5px;
@@ -182,9 +184,11 @@
     box-shadow: 0 0 32px 10px var(--c);
 }
 
+/* la sphère à viser brille plus que les autres */
 .sphere-zone--current::after {
-    box-shadow: 0 0 62px 22px var(--c), 0 0 110px 38px var(--c);
+    box-shadow: 0 0 30px 8px rgba(255, 255, 255, .9), 0 0 75px 26px var(--c), 0 0 140px 48px var(--c);
     animation-duration: 1.6s;
+    opacity: 1;
 }
 
 .activity-pin.planned-current::after {
@@ -197,6 +201,13 @@
     inset: -2px;
     box-shadow: 0 0 0 3px #e17055, 0 0 17px 5px rgba(225, 112, 85, .95), 0 0 38px 10px rgba(225, 112, 85, .65);
     animation-duration: 1s;
+}
+
+/* halo allumé à la main pendant l'atelier */
+.activity-pin.highlighted::after {
+    inset: -3px;
+    box-shadow: 0 0 22px 7px rgba(255, 255, 255, .9), 0 0 48px 16px #f39c12;
+    animation-duration: 1.2s;
 }
 
 .sphere-zone--done::after {
