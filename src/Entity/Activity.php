@@ -49,6 +49,10 @@ class Activity
     #[ORM\Column(options: ['default' => true])]
     private bool $isAvailable = true;
 
+    // halo allumé à la main pendant l'atelier
+    #[ORM\Column(options: ['default' => false])]
+    private bool $isHighlighted = false;
+
     #[ORM\Column(nullable: true)]
     private ?int $estimatedWaitMinutes = null;
 
@@ -203,6 +207,18 @@ class Activity
     public function setIsAvailable(bool $isAvailable): static
     {
         $this->isAvailable = $isAvailable;
+
+        return $this;
+    }
+
+    public function isHighlighted(): bool
+    {
+        return $this->isHighlighted;
+    }
+
+    public function setIsHighlighted(bool $isHighlighted): static
+    {
+        $this->isHighlighted = $isHighlighted;
 
         return $this;
     }
