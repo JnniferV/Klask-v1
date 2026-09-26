@@ -58,6 +58,8 @@ function applyActivity(el, a) {
     el.dataset.basePoints = a.basePoints ?? 0;
     el.setAttribute("aria-label", a.name);
     el.classList.toggle("unavailable", !a.isAvailable);
+    // halo allumé à la main depuis l'admin
+    el.classList.toggle("highlighted", !!a.isHighlighted);
     el.classList.toggle("cap-full", a.capacity === "full");
     el.classList.toggle("cap-almost", a.capacity === "almost");
 }
