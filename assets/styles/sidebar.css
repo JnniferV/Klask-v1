@@ -112,12 +112,11 @@
 .avatar-block {
     display: flex;
     justify-content: center;
-    padding: 6px 0;
+    padding: 0;
 }
 
 .avatar--md {
     width: clamp(165px, 46vw, 205px);
-    aspect-ratio: 1 / .7;
 }
 
 .avatar--sm {
