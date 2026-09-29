@@ -10,12 +10,12 @@ class SphereFixtures extends Fixture
 {
     /** @var array<string, string> name => couleur hex */
     private const SPHERES = [
-        'CRÉATIF' => '#E74C3C',
-        'RIGOUREUX' => '#3498DB',
-        'NOUVEAUTÉ' => '#9B59B6',
-        'EXTÉRIEUR' => '#27AE60',
-        'COMMUNIQUER' => '#F39C12',
-        'UTILE' => '#1ABC9C',
+        'CRÉATIF' => '#FBC52B',
+        'RIGOUREUX' => '#0D65D7',
+        'NOUVEAUTÉ' => '#F64851',
+        'EXTÉRIEUR' => '#3E7C5B',
+        'COMMUNIQUER' => '#7D59FB',
+        'UTILE' => '#E55EBB',
     ];
 
     public function load(ObjectManager $manager): void
