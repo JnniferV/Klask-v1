@@ -123,8 +123,11 @@
     text-transform: uppercase;
     letter-spacing: .04em;
     /* sombre sur halo clair : le blanc passait mal sur orange et turquoise */
-    color: #222;
-    text-shadow: 0 1px 3px rgba(255, 255, 255, .75);
+    color: #ffffff;
+    border: #0a0a0a 3px;
+    text-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.9),
+        0 0 2px rgba(0, 0, 0, 1);
     text-align: center;
     padding: 0 4px;
     /* coupe le mot, le libellé reste dans sa sphère */
