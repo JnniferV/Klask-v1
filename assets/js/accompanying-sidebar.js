@@ -125,7 +125,8 @@ async function poke(card) {
         card.dataset.lastScan = String(Math.floor(Date.now() / 1000));
         card.classList.remove("student-card--alert");
         for (const k of [...toasted]) {
-            if (k.startsWith(card.dataset.id)) toasted.delete(k);
+            // les motifs commencent par une espace : "1" ne doit pas purger "12 …"
+            if (k.startsWith(card.dataset.id + " ")) toasted.delete(k);
         }
     }
 }
