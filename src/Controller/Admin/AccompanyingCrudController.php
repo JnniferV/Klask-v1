@@ -15,8 +15,13 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Address;
+use Symfony\Component\Mime\Email as EmailMessage;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
@@ -26,6 +31,10 @@ class AccompanyingCrudController extends AbstractCrudController
     public function __construct(
         private readonly AuthorityRepository $authorityRepository,
         private readonly UserPasswordHasherInterface $hasher,
+        #[Autowire('%app.mailer_from%')]
+        private readonly string $mailerFrom,
+        #[Autowire(lazy: true)]
+        private readonly MailerInterface $mailer,
     ) {
     }
 
@@ -45,7 +54,12 @@ class AccompanyingCrudController extends AbstractCrudController
     public function configureFields(string $pageName): iterable
     {
         yield TextField::new('pseudo', 'Nom');
-        yield TextField::new('email', 'Email');
+        yield TextField::new('email', 'Email')
+            ->setRequired(true)
+            ->setFormTypeOption('constraints', [
+                new NotBlank(message: 'Veuillez saisir un e-mail.'),
+                new Email(message: 'Adresse e-mail invalide.'),
+            ]);
         // le groupe est la seule source pour poke et les scores temps réel
         yield AssociationField::new('group', 'Groupe');
 
@@ -88,15 +102,37 @@ class AccompanyingCrudController extends AbstractCrudController
         $plain = $entityInstance->getPassword() ?? throw new \LogicException('Mot de passe requis.');
         $entityInstance->setPassword($this->hasher->hashPassword($entityInstance, $plain));
         parent::persistEntity($em, $entityInstance);
+        $this->sendCredentials($entityInstance, $plain);
     }
 
     public function updateEntity(EntityManagerInterface $em, $entityInstance): void
     {
         // champ vide : on restaure le hash d'origine, sinon on hache la saisie
+        $original = $em->getUnitOfWork()->getOriginalEntityData($entityInstance);
         $plain = $entityInstance->getPassword();
         $entityInstance->setPassword(null === $plain
-            ? ($em->getUnitOfWork()->getOriginalEntityData($entityInstance)['password'] ?? null)
+            ? ($original['password'] ?? null)
             : $this->hasher->hashPassword($entityInstance, $plain));
         parent::updateEntity($em, $entityInstance);
+
+        // rattachement tardif à un groupe ou nouveau mot de passe : l'accompagnateur doit le savoir
+        if (null !== $plain || ($original['group'] ?? null) !== $entityInstance->getGroup()) {
+            $this->sendCredentials($entityInstance, $plain);
+        }
+    }
+
+    // envoyé après l'écriture en base : on ne communique que des identifiants réellement actifs
+    // texte brut : aucune saisie admin n'est interprétée comme du HTML
+    private function sendCredentials(User $user, ?string $plainPassword): void
+    {
+        $this->mailer->send((new EmailMessage())
+            ->from(new Address($this->mailerFrom, 'Klask'))
+            ->to((string) $user->getEmail())
+            ->subject('Vos identifiants KLASK')
+            ->text(implode("\n", array_filter([
+                'Email : '.$user->getEmail(),
+                null !== $plainPassword ? 'Mot de passe : '.$plainPassword : null,
+                'Code groupe : '.($user->getGroup()?->getCode() ?? 'aucun groupe assigné'),
+            ]))));
     }
 }
