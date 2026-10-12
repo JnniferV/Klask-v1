@@ -31,8 +31,6 @@ class AccompanyingCrudController extends AbstractCrudController
     public function __construct(
         private readonly AuthorityRepository $authorityRepository,
         private readonly UserPasswordHasherInterface $hasher,
-        #[Autowire('%app.mailer_from%')]
-        private readonly string $mailerFrom,
         #[Autowire(lazy: true)]
         private readonly MailerInterface $mailer,
     ) {
@@ -126,7 +124,7 @@ class AccompanyingCrudController extends AbstractCrudController
     private function sendCredentials(User $user, ?string $plainPassword): void
     {
         $this->mailer->send((new EmailMessage())
-            ->from(new Address($this->mailerFrom, 'Klask'))
+            ->from(new Address((string) $this->getParameter('app.mailer_from'), 'Klask'))
             ->to((string) $user->getEmail())
             ->subject('Vos identifiants KLASK')
             ->text(implode("\n", array_filter([
