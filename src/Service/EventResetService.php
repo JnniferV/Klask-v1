@@ -14,6 +14,12 @@ final class EventResetService
     /** @return array<string, int> */
     public function reset(Event $event): array
     {
+        // interdit avant la fin de l'event, ou sans fin
+        $end = $event->getEndHourEvent();
+        if (null === $end || $end > new \DateTimeImmutable()) {
+            throw new \DomainException('Réinitialisation impossible : l\'événement n\'est pas terminé.');
+        }
+
         $eventId = (int) $event->getId();
 
         $counts = [
