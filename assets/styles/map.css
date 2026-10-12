@@ -1,4 +1,4 @@
-/* svh : la barre du navigateur ne bouge plus rien */
+/* svh pour que la barre du navigateur bouge rien */
 .page-map {
     height: 100vh;
     height: 100svh;
@@ -58,7 +58,7 @@
 .map-area {
     flex: 1;
     touch-action: none;
-    /* latence pan/zoom */
+    /* le navigateur gère plus le geste, zéro latence */
     min-width: 0;
     overflow: hidden;
     position: relative;
@@ -103,7 +103,7 @@
     position: absolute;
     transform: translate(-50%, -50%);
     border-radius: 50%;
-    /* reflet en haut, ombre en bas : l'aspect bille de la maquette */
+    /* reflet en haut, ombre en bas, effet bille */
     background:
         radial-gradient(circle at 50% 22%, rgba(255, 255, 255, .85) 0 6%, rgba(255, 255, 255, .35) 18%, transparent 42%),
         radial-gradient(circle at 50% 118%, rgba(0, 0, 0, .45) 0 30%, transparent 62%),
@@ -118,11 +118,11 @@
 }
 
 .sphere-label {
-    /* mobile = le 1er nombre, desktop = le 3e : baisse le 1er si c'est encore gros */
+    /* 1er nombre mobile, 3e desktop, baisser le 1er si gros */
     font: 700 clamp(.2rem, .8vw, .68rem)/1.2 var(--f-body);
     text-transform: uppercase;
     letter-spacing: .04em;
-    /* sombre sur halo clair : le blanc passait mal sur orange et turquoise */
+    /* ombre noire, sinon le blanc se lit mal */
     color: #ffffff;
     border: #0a0a0a 3px;
     text-shadow:
@@ -130,11 +130,11 @@
         0 0 2px rgba(0, 0, 0, 1);
     text-align: center;
     padding: 0 4px;
-    /* coupe le mot, le libellé reste dans sa sphère */
+    /* coupe le mot pour rester dans la sphère */
     overflow-wrap: anywhere;
 }
 
-/* marge en % de la largeur = de la hauteur (aspect-ratio 1) : décale le libellé d'un quart de sphère */
+/* décale le libellé d'un quart de sphère */
 .sphere-label--haut .sphere-label {
     margin-bottom: 46%;
 }
@@ -189,17 +189,24 @@
     }
 }
 
-/* les préférées restent visibles sans voler la vedette à la courante */
+/* préférées visibles, mais moins que celle à visiter */
 .sphere-zone--priority::after {
     box-shadow: 0 0 14px 2px var(--c);
     opacity: .35;
 }
 
-/* la sphère à viser brille plus que les autres */
+/* la sphère à visiter clignote pour attirer l'œil */
 .sphere-zone--current::after {
-    box-shadow: 0 0 22px 6px rgba(255, 255, 255, .85);
-    animation-duration: 1.6s;
+    box-shadow: 0 0 30px 10px rgba(255, 255, 255, .95), 0 0 60px 20px var(--c);
+    animation: halo-blink 1s ease-in-out infinite;
     opacity: 1;
+}
+
+@keyframes halo-blink {
+    50% {
+        transform: scale(1.12);
+        opacity: .15;
+    }
 }
 
 .activity-pin.planned-current::after {
@@ -296,7 +303,7 @@
 
 @media (hover: hover) {
 
-    /* sticky tap sans ça */
+    /* survol seulement si souris, sinon collé au tap */
     .activity-pin:hover {
         transform: translate(-50%, -50%) scale(1.7);
         box-shadow: 0 0 0 2px #fff, 0 0 14px color-mix(in srgb, var(--c, var(--c-accent)) 90%, transparent);
@@ -571,12 +578,12 @@
     padding-right: 34px;
     font: 700 1.05rem/1.45 var(--f-mono);
     animation: alertIn .5s ease;
-    /* break-word et non word-break : ce dernier coupait « FÉLICITATIONS » sous 390px */
+    /* break-word, sinon FÉLICITATIONS coupé sur petit écran */
     overflow-wrap: break-word;
     white-space: normal;
 }
 
-/* message allégé pour que le titre en gras ressorte */
+/* message plus léger pour que le titre ressorte */
 .event-alert-banner:has(strong) {
     font-weight: 400;
 }
@@ -589,7 +596,7 @@
     top: 50%;
     transform: translate(-50%, -50%);
     z-index: 10061;
-    /* > intro 10060 */
+    /* au-dessus de l'intro qui est à 10060 */
     padding-right: 34px;
     font: clamp(.9rem, 2.6vw, .95rem)/1.55 var(--f-mono);
     letter-spacing: 1px;
@@ -742,7 +749,7 @@
 
 @media (min-width: 768px) {
 
-    /* --anchored : lu par positionBubble, le breakpoint reste ici */
+    /* --anchored lu par positionBubble, le breakpoint reste ici */
     .activity-bubble {
         --anchored: 1;
         left: auto;
