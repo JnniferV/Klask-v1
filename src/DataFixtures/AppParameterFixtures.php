@@ -61,7 +61,7 @@ class AppParameterFixtures extends Fixture
             'key' => 'BONUS_MAX_SCORE',
             'value' => '150',
             'type' => 'integer',
-            'description' => 'Bonus de points du score maximal : toute la carte faite, ateliers et conférences compris.',
+            'description' => 'Bonus de points du score maximal : toute la carte faite, ateliers et conférences compris, point pause exclu.',
         ],
         [
             'key' => 'ALERT_MAP_ACTIVE',

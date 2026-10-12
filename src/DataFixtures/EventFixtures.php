@@ -10,10 +10,10 @@ class EventFixtures extends Fixture
 {
     public const EVENT_AFTERNOON = 'event_apres_midi';
 
-    // session unique : la 3ᵉ et au-dessus viennent tous l'après-midi
+    // une seule session, toute la journée de 8h à 19h
     /** @var array<string, array{0: string, 1: string, 2: string}> */
     private const EVENTS = [
-        self::EVENT_AFTERNOON => ['Klask 2026 — Après-midi (3ᵉ et +)', '13:00', '17:00'],
+        self::EVENT_AFTERNOON => ['Klask 2026 — Après-midi (3ᵉ et +)', '08:00', '19:00'],
     ];
 
     public function load(ObjectManager $manager): void
