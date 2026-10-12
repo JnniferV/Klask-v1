@@ -14,6 +14,8 @@ class ActivityCategory
     public const TYPE_ATELIER = 'Atelier';
     public const TYPE_CONFERENCE = 'Conférence';
     public const TYPE_PROFESSION = 'Profession';
+    // pause au bar, jamais comptée pour le score max
+    public const TYPE_PAUSE = 'Pause';
 
     public const SCHEDULED_TYPES = [self::TYPE_ATELIER, self::TYPE_CONFERENCE];
 
