@@ -37,7 +37,7 @@ class EventCrudController extends AbstractCrudController
         return $crud
             ->setEntityLabelInSingular('Event')
             ->setEntityLabelInPlural('Events')
-            // en dropdown easyadmin ignore le template de l'action et la rend en lien GET
+            // sinon easyadmin ignore le template et fait un lien
             ->showEntityActionsInlined()
             ->setDefaultSort(['beginningHourEvent' => 'DESC']);
     }
@@ -55,14 +55,13 @@ class EventCrudController extends AbstractCrudController
         $reset = Action::new('resetEvent', 'Réinitialiser', 'fa fa-refresh')
             ->linkToCrudAction('resetEvent')
             ->setCssClass('btn btn-warning')
-            // pas de displayIf : reset rejouable, resetAt devient une date
+            // pas de condition, on peut relancer le reset
             ->setTemplatePath('admin/actions/reset_event.html.twig');
 
         return $actions
             ->add(Crud::PAGE_INDEX, $reset)
             ->add(Crud::PAGE_DETAIL, $reset)
-            // les groupes référencent l'event : la suppression échoue toujours, et le bouton
-            // est voisin de « Réinitialiser » depuis l'affichage en ligne
+            // suppression impossible, et bouton trop près du reset
             ->disable(Action::DELETE);
     }
 
@@ -77,10 +76,13 @@ class EventCrudController extends AbstractCrudController
         /** @var Event $event */
         $event = $context->getEntity()->getInstance();
 
-        $this->resetService->reset($event);
-        $this->em->flush();
-
-        $this->addFlash('success', "Event « {$event->getName()} » réinitialisé avec succès.");
+        try {
+            $this->resetService->reset($event);
+            $this->em->flush();
+            $this->addFlash('success', "Event « {$event->getName()} » réinitialisé avec succès.");
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
 
         return $this->redirect(
             $this->urlGenerator->setController(self::class)->setAction(Action::INDEX)->generateUrl()
