@@ -2,6 +2,7 @@
 
 namespace App\Tests\Service;
 
+use App\Entity\Event;
 use App\Entity\User;
 use App\Service\EventResetService;
 use App\Tests\Support\DbFixture;
@@ -47,7 +48,7 @@ class EventResetServiceTest extends KernelTestCase
         $this->assertSame(0, $this->em->getRepository(\App\Entity\Group::class)->find($group->getId())->getScore());
     }
 
-    // reset isolé par event
+    // le reset ne touche pas les autres events
     public function testLaRemiseAZeroNAffectePasUnAutreEvenement(): void
     {
         $conserve = $this->fixture->student();
@@ -74,5 +75,14 @@ class EventResetServiceTest extends KernelTestCase
         $this->service->reset($event);
 
         $this->assertNotNull($event->getResetAt(), 'Sans horodatage, la remise à zéro peut rejouer en boucle.');
+    }
+
+    // pendant l'event, un clic ne doit rien effacer
+    public function testLaRemiseAZeroEstRefuseeAvantLaFinDeLEvenement(): void
+    {
+        $enCours = (new Event())->setName('JPO en cours')->setEndHourEvent(new \DateTimeImmutable('+1 hour'));
+
+        $this->expectException(\DomainException::class);
+        $this->service->reset($enCours);
     }
 }
