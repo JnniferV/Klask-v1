@@ -52,11 +52,12 @@ final class DbFixture
             ->setColor('#000000')
             ->setScore(0)
             ->setEstablishment((new Establishment())->setName('Lycée '.$n))
-            ->setEvent((new Event())->setName('JPO '.$n));
+            // event déjà fini, donc on peut le reset
+            ->setEvent((new Event())->setName('JPO '.$n)->setEndHourEvent(new \DateTimeImmutable('-1 hour')));
 
         $user = (new User())->setPseudo('Élève '.$n)->setScore(0)->setAuthority($authority)->setGroup($group);
 
-        // authorityRoles manuel
+        // on relie le rôle à la main ici
         $authorityRole = new AuthorityRole($authority, $role);
         $authority->getAuthorityRoles()->add($authorityRole);
 
