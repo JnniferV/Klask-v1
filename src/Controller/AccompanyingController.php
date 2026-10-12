@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Group;
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\NotificationReplay;
 use App\Service\RealtimeNotifier;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,6 +19,7 @@ class AccompanyingController extends AbstractController
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly RealtimeNotifier $notifier,
+        private readonly NotificationReplay $replay,
     ) {
     }
 
@@ -40,9 +42,9 @@ class AccompanyingController extends AbstractController
             return $this->json(['error' => 'Élève introuvable dans votre groupe.'], 404);
         }
 
-        if (!$this->notifier->publish('poke/'.$student->getId(), ['poked' => true])) {
-            return $this->json(['error' => 'Signal non envoyé : hub Mercure indisponible.'], 503);
-        }
+        // gardé avant l'envoi, même si mercure est en panne
+        $at = $this->replay->rememberPoke($student);
+        $this->notifier->publish('poke/'.$student->getId(), ['poked' => true, 'at' => $at]);
 
         return $this->json(['ok' => true]);
     }
