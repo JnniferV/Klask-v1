@@ -1,11 +1,26 @@
-// sidebar accompagnateur : poke + scores + alertes (blocage / scan trop rapide / inactivité)
+// sidebar accompagnateur, signal, scores et alertes des élèves
 const cfg = JSON.parse(
     document.getElementById("accompanying-config").textContent,
 );
 const list = document.getElementById("group-list");
 const inactivityMin = cfg.inactivityMin ?? 25;
 const INACTIVE = ` est inactif depuis ${inactivityMin} min`;
-const toasted = new Set();
+// alertes déjà vues, gardées même après un rechargement
+const TOASTED_KEY = "klask:alertes-vues";
+const toasted = new Set(
+    (() => {
+        try {
+            return JSON.parse(sessionStorage.getItem(TOASTED_KEY)) ?? [];
+        } catch {
+            return [];
+        }
+    })(),
+);
+addEventListener("pagehide", () => {
+    try {
+        sessionStorage.setItem(TOASTED_KEY, JSON.stringify([...toasted]));
+    } catch {}
+});
 
 function toast(msg, cls = "") {
     const el = document.createElement("div");
@@ -39,7 +54,7 @@ addEventListener("klask:studentScore", ({ detail }) => {
         flagCard(card, true, " a scanné trop vite");
 });
 
-// nouvel inscrit : lastScan= compteur d'inactivité démarre à l'arrivé
+// nouvel inscrit, son chrono d'inactivité part maintenant
 addEventListener("klask:newStudent", ({ detail }) => {
     if (!list || list.querySelector(`.student-card[data-id="${detail.id}"]`))
         return;
@@ -72,8 +87,13 @@ function checkInactive() {
 }
 checkInactive();
 setInterval(checkInactive, 60000);
-// les navigateurs gèlent les timers d'un onglet en arrière-plan
-addEventListener("visibilitychange", () => document.hidden || checkInactive());
+// après 30 s ailleurs, on recharge pour pas rater d'inscrits
+let hiddenAt = 0;
+addEventListener("visibilitychange", () => {
+    if (document.hidden) hiddenAt = Date.now();
+    else if (Date.now() - hiddenAt > 30000) location.reload();
+    else checkInactive();
+});
 
 const pokeDialog = document.getElementById("poke-confirm");
 
@@ -99,11 +119,11 @@ async function poke(card) {
             headers: { "X-CSRF-Token": cfg.csrfToken },
         });
     } catch {
-        // si réseau coupé
+        // pas de réseau, le signal n'est pas parti
         toast("Signal non envoyé — connexion perdue. Réessayez.");
         return;
     }
-    // 403 = jeton CSRF périmé
+    // 403 veut dire jeton de sécurité trop vieux
     if (res.status === 403) {
         toast("Session renouvelée — rechargement de la page…");
         setTimeout(() => location.reload(), 1500);
@@ -116,16 +136,16 @@ async function poke(card) {
                 "). Vérifiez la configuration du groupe.",
         );
     else {
-        // centré comme la notif élève
+        // au centre, comme la notif côté élève
         toast(
             "Signal envoyé à " + card.dataset.pseudo,
             "event-alert-banner--centered",
         );
-        // sans ça checkInactive re-signale le même élève 60 sec plus tard
+        // sinon le même élève est re-signalé une minute après
         card.dataset.lastScan = String(Math.floor(Date.now() / 1000));
         card.classList.remove("student-card--alert");
         for (const k of [...toasted]) {
-            // les motifs commencent par une espace : "1" ne doit pas purger "12 …"
+            // motifs avec espace devant, pour pas confondre 1 et 12
             if (k.startsWith(card.dataset.id + " ")) toasted.delete(k);
         }
     }

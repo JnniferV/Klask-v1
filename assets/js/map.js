@@ -11,7 +11,7 @@ const TOP_SPHERES = new Set(BOOT.topSpheres ?? []);
 const BOTTOM_SPHERES = new Set(BOOT.bottomSpheres ?? []);
 const PARCOURS = BOOT.parcours ?? [];
 const PARCOURS_MAP = new Map(PARCOURS.map((p) => [p.id, p]));
-// toutes les activités scannées
+// toutes les activités déjà scannées par l'élève
 const SCANNED = new Set(BOOT.scanned ?? []);
 
 const sphereStyle = (color, s) =>
@@ -29,7 +29,7 @@ function createSphere(sphere) {
     el.className = "sphere-zone" + cls;
     el.dataset.activityIds = sphere.activities.map((a) => a.id).join(",");
     el.style.cssText = sphereStyle(sphere.color, sphere);
-    // le libellé fuit les activités : elles en bas → libellé en haut, et inversement
+    // libellé à l'opposé des activités pour pas les cacher
     const ys = sphere.activities.map((a) => a.pointYActivity);
     if (ys.length) {
         const bas = ys.reduce((s, y) => s + y, 0) / ys.length > sphere.centerY;
@@ -44,7 +44,7 @@ function createSphere(sphere) {
     return el;
 }
 
-// position + état d'un pin : partagé entre la création et la mise à jour temps réel
+// place et état d'un pin, création ou direct
 function applyActivity(el, a) {
     el.style.left = a.pointXActivity + "%";
     el.style.top = a.pointYActivity + "%";
@@ -72,7 +72,7 @@ function createPin(activity, color) {
     if (step && !plannedClass) {
         if (step.current) plannedClass = " planned-current";
         else if (step.urgent)
-            plannedClass = " planned-urgent"; // atelier/conf imminent
+            plannedClass = " planned-urgent"; // atelier ou conf qui commence très bientôt
         else if (step.step === (PARCOURS.find((p) => p.current)?.step ?? 0) + 1)
             plannedClass = " planned-next";
         else plannedClass = " planned-future";
@@ -83,18 +83,23 @@ function createPin(activity, color) {
     return btn;
 }
 
-// coordonnées des activité
+// position de chaque activité sur la carte
 let coordsMap = new Map();
-// ID de l'activité urgente (atelier/conf) reçue via Mercure
+// activité urgente reçue en direct, atelier ou conf
 let urgentActivityId = null;
-// id du dernier scan validé mis à jour à chaque scan
+// dernier scan validé, mis à jour à chaque scan
 let lastScannedId = BOOT.scanned?.[0] ?? null;
 
-// score max possible
+// bravo si l'élève a tout scanné sur la carte
 function congratsIfMaxScore() {
     if (
         !coordsMap.size ||
-        ![...coordsMap.keys()].every((id) => SCANNED.has(id))
+        // le point pause compte pas, pareil que le serveur
+        ![...coordsMap.keys()].every(
+            (id) =>
+                SCANNED.has(id) ||
+                document.getElementById("pin-" + id)?.dataset.category === "Pause",
+        )
     )
         return false;
     showBanner(
@@ -104,7 +109,7 @@ function congratsIfMaxScore() {
     return true;
 }
 
-// lecture du JSON embarqué dans le HTML
+// on lit les données mises dans la page
 function loadMap() {
     try {
         const mapData = BOOT.mapData;
@@ -116,7 +121,7 @@ function loadMap() {
 
         for (const sphere of spheres) {
             const sphereEl = createSphere(sphere);
-            // tagger la zone sphère selon l'état du parcours
+            // on marque la sphère selon où en est le parcours
             const steps = sphere.activities
                 .map((a) => PARCOURS_MAP.get(a.id))
                 .filter(Boolean);
@@ -153,7 +158,7 @@ function loadMap() {
         document.getElementById("map-loading")?.remove();
         OVERLAY.appendChild(frag);
 
-        // flèche si scans faits OU urgent actif (ex: atelier/conf imminent)
+        // flèche si déjà des scans ou un atelier urgent
         const hasUrgent = PARCOURS.some((p) => p.urgent && !p.done);
         if (
             (PARCOURS.some((p) => p.done) || hasUrgent) &&
@@ -168,20 +173,20 @@ function loadMap() {
     }
 }
 
-// flèche de la dernière sphère validé vers la prochaine
+// flèche de la dernière sphère faite vers la suivante
 function renderParcoursPath(coordsMap) {
     const lastDoneIdx = PARCOURS.reduce((acc, p, i) => (p.done ? i : acc), -1);
     const currentIdx = PARCOURS.findIndex((p) => p.current);
     if (currentIdx === -1) return;
 
-    // mode urgent
+    // mode urgent, un atelier ou conf arrive
     const urgentStep =
         urgentActivityId === null
             ? PARCOURS.find((p) => p.urgent && !p.done)
             : null;
     const isUrgent = urgentActivityId !== null || urgentStep != null;
     const toId = urgentActivityId ?? urgentStep?.id ?? PARCOURS[currentIdx].id;
-    // lastScanned en priorité,sinon lastDone par ordre, sinon current si mode urgent
+    // on part du dernier scan, sinon de la dernière faite
     const fromId =
         lastScannedId ??
         (lastDoneIdx !== -1
@@ -200,7 +205,7 @@ function renderParcoursPath(coordsMap) {
     svg.setAttribute("viewBox", "0 0 100 100");
     svg.setAttribute("preserveAspectRatio", "none");
 
-    // pointe de flèche
+    // on dessine la pointe de la flèche
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
     const marker = document.createElementNS(
         "http://www.w3.org/2000/svg",
@@ -222,7 +227,7 @@ function renderParcoursPath(coordsMap) {
     defs.appendChild(marker);
     svg.appendChild(defs);
 
-    // ligne de la fleche
+    // on dessine le trait de la flèche
     [["neon-glow"], ["neon-beam"]].forEach(([cls]) => {
         const line = document.createElementNS(
             "http://www.w3.org/2000/svg",
@@ -241,10 +246,10 @@ function renderParcoursPath(coordsMap) {
     OVERLAY.appendChild(svg);
 }
 
-// mise à jour de l'état parcours
+// on met à jour où en est le parcours
 window.addEventListener("klask:pinDone", ({ detail }) => {
     const { activityId, nextStepId } = detail;
-    // toujours mémoriser le dernier scan comme début de la flèche
+    // le dernier scan sert toujours de départ à la flèche
     lastScannedId = activityId;
     SCANNED.add(activityId);
     if (activityId === urgentActivityId) urgentActivityId = null;
@@ -253,13 +258,13 @@ window.addEventListener("klask:pinDone", ({ detail }) => {
     if (entry) {
         entry.done = true;
 
-        // le serveur donne l'étape suivante, sinon la première non faite
+        // étape donnée par le serveur, sinon la première pas faite
         const newCurrent =
             PARCOURS.find((p) => !p.done && p.id === nextStepId) ??
             PARCOURS.find((p) => !p.done);
         for (const p of PARCOURS) p.current = p === newCurrent;
 
-        // MAJ classes DOM du pin scanné
+        // on met à jour le pin qu'on vient de scanner
         const donePin = document.getElementById("pin-" + activityId);
         donePin?.classList.remove(
             "planned-current",
@@ -280,7 +285,7 @@ window.addEventListener("klask:pinDone", ({ detail }) => {
         }
     }
 
-    // MAJ classes sphere-zone
+    // on met à jour l'état des sphères
     for (const sphereEl of document.querySelectorAll(".sphere-zone")) {
         const ids = sphereEl.dataset.activityIds?.split(",").map(Number) ?? [];
         const steps = ids.map((id) => PARCOURS_MAP.get(id)).filter(Boolean);
@@ -295,7 +300,7 @@ window.addEventListener("klask:pinDone", ({ detail }) => {
         );
     }
 
-    // re-render flèche depuis le dernier scan
+    // on redessine la flèche depuis le dernier scan
     document.querySelector(".parcours-layer")?.remove();
     if (PARCOURS.some((p) => p.current)) {
         renderParcoursPath(coordsMap);
@@ -313,7 +318,7 @@ window.addEventListener("klask:pinDone", ({ detail }) => {
 
 const ALERT_BANNER_ID = "alert-map-banner";
 
-// bannières déjà fermées
+// bannières que l'élève a déjà fermées
 const DISMISSED_KEY = "klask:notifs-fermees";
 let dismissed = new Set();
 try {
@@ -332,7 +337,7 @@ function dismiss(el, id) {
     } catch {}
 }
 
-// croix de fermeture pour notif
+// petite croix pour fermer une notif
 function closeButton(onClose) {
     const b = Object.assign(document.createElement("button"), {
         type: "button",
@@ -353,7 +358,7 @@ function showBanner(text, cls = "", id = "") {
     document.body.appendChild(el);
 }
 
-// alerte event (Atelier/Conf dans n min) ou notif admin (titre, lien, type)
+// alerte atelier ou conf, ou message envoyé par l'admin
 function showEventAlert(data) {
     if (data.categoryType) {
         showBanner(
@@ -393,7 +398,7 @@ function showEventAlert(data) {
 
 let alertActive = false;
 
-// la carte existe en thème clair/sombre et mode alerte
+// plan clair, sombre ou en mode alerte
 function applyPlan() {
     const img = document.getElementById("map-plan");
     const theme = document.body.dataset.theme === "dark" ? "dark" : "light";
@@ -423,12 +428,14 @@ addEventListener("klask:theme", applyPlan);
 const replayNotifications = () =>
     fetch(BOOT.notificationsUrl, { headers: { Accept: "application/json" } })
         .then((r) => (r.ok ? r.json() : []))
-        .then((list) => list.forEach(showEventAlert))
+        .then((list) =>
+            list.forEach((d) => (d.poked ? showPokeNotif(d.at) : showEventAlert(d))),
+        )
         .catch(() => {});
 
 replayNotifications();
 
-// mise à jour temps réel via Mercure
+// mises à jour en direct reçues par mercure
 function handleMapUpdate(e) {
     let data;
     try {
@@ -444,7 +451,7 @@ function handleMapUpdate(e) {
 
     if (data.alert) {
         showEventAlert(data);
-        // alerte atelier/conf avec activityId → forcer toutes les flèches vers cet événement
+        // atelier ou conf urgent, toutes les flèches vont dessus
         if (data.activityId && PARCOURS.length > 1) {
             urgentActivityId = data.activityId;
             document.querySelector(".parcours-layer")?.remove();
@@ -454,7 +461,7 @@ function handleMapUpdate(e) {
     }
 
     if (data.poked) {
-        showPokeNotif();
+        showPokeNotif(data.at);
         return;
     }
 
@@ -465,7 +472,7 @@ function handleMapUpdate(e) {
         return;
     }
 
-    // total du groupe avec scan d'un coéquipier MàJ la sidebar de tout le groupe
+    // total du groupe mis à jour pour tout le monde
     if (data.groupScore !== undefined) {
         const el = document.getElementById("score-groupe");
         if (el) el.textContent = data.groupScore;
@@ -501,8 +508,8 @@ function handleMapUpdate(e) {
         if (data.action === "delete") {
             pin?.remove();
             coordsMap.delete(data.id);
-            BUBBLE.hidden = true; // la bulle peut décrire le pin supprimé
-            // la flèche pointait peut-être dessus
+            BUBBLE.hidden = true; // la bulle parlait peut-être du pin supprimé
+            // la flèche visait peut-être ce pin
             if (PARCOURS_MAP.has(data.id)) {
                 document.querySelector(".parcours-layer")?.remove();
                 renderParcoursPath(coordsMap);
@@ -510,7 +517,7 @@ function handleMapUpdate(e) {
             return;
         }
 
-        // id inconnu : création, id connu : mise à jour
+        // id inconnu on crée, id connu on met à jour
         if (pin) applyActivity(pin, data);
         else OVERLAY.appendChild(createPin(data, data.color));
         coordsMap.set(data.id, {
@@ -520,8 +527,7 @@ function handleMapUpdate(e) {
     }
 }
 
-// hors de .map-canvas : son transform ferait viser le canvas et non l'écran
-// mobile : bandeau bas en CSS, desktop : ancrée au pin en coordonnées écran
+// hors canvas, en bas sur mobile, au pin sinon
 function positionBubble(pin) {
     BUBBLE.style.cssText = "";
     BUBBLE.hidden = false;
@@ -531,7 +537,7 @@ function positionBubble(pin) {
     const p = pin.getBoundingClientRect();
     const w = BUBBLE.offsetWidth;
     const h = BUBBLE.offsetHeight;
-    // 25px = pointe de la flèche, alignée sur le pin
+    // 25px pour la pointe, bien alignée sur le pin
     const left = Math.min(
         Math.max(8, p.left + p.width / 2 - 25),
         innerWidth - w - 8,
@@ -545,7 +551,7 @@ function positionBubble(pin) {
     BUBBLE.style.cssText = `left:${left}px;top:${top}px`;
 }
 
-//un stand hors des 3 sphères préférées rapporte moins
+// un stand hors des 3 préférées rapporte moins
 function pinPoints(pin) {
     const sphereId = +pin.dataset.sphereId;
     return pin.dataset.category === "Stand" &&
@@ -592,22 +598,20 @@ document.addEventListener("click", () => {
     BUBBLE.hidden = true;
 });
 
-function showPokeNotif() {
-    if (!document.getElementById("btn-scan")) return;
-    let notif = document.getElementById("poke-notif");
-    if (!notif) {
-        notif = document.createElement("div");
-        notif.id = "poke-notif";
-        notif.className = "poke-notif";
-        const close = closeButton(() => (notif.hidden = true));
-        const msg = document.createElement("p");
-        msg.className = "poke-notif__msg";
-        msg.textContent =
-            "Votre accompagnateur a remarqué que vous étiez inactif ou que vous avez scanné trop et trop vite. Si vous avez des questions, n'hésitez pas à venir nous les poser. Team Klask";
-        notif.append(close, msg);
-        document.body.appendChild(notif);
-    }
-    notif.hidden = false;
+// signal en direct ou au retour, fermé il revient pas
+function showPokeNotif(at) {
+    const id = "poke-" + at;
+    if (!document.getElementById("btn-scan") || dismissed.has(id)) return;
+    document.getElementById("poke-notif")?.remove();
+    const notif = document.createElement("div");
+    notif.id = "poke-notif";
+    notif.className = "poke-notif";
+    const msg = document.createElement("p");
+    msg.className = "poke-notif__msg";
+    msg.textContent =
+        "Votre accompagnateur a remarqué que vous étiez inactif ou que vous avez scanné trop et trop vite. Si vous avez des questions, n'hésitez pas à venir nous les poser. Team Klask";
+    notif.append(closeButton(() => dismiss(notif, id)), msg);
+    document.body.appendChild(notif);
 }
 
 const helpModal = document.getElementById("help-modal");
@@ -632,7 +636,7 @@ document
         });
     });
 
-// pan + Zoom
+// déplacer et zoomer la carte avec doigts ou souris
 (function initPanZoom() {
     const area = document.querySelector(".map-area");
     const canvas = document.querySelector(".map-canvas");
@@ -655,22 +659,18 @@ document
         touchOriginTx = 0,
         touchOriginTy = 0;
 
-    // cadre réellement dessiné dans le webp du plan : le reste est de la marge blanche
-    // (mesuré sur `cartes claire.webp` — x 18,7-81,2 %, y 12,1-96,1 %)
-    // le bas descend jusqu'à 96 % : les flèches ENTRÉE y sont, elles étaient rognées
+    // zone utile du plan, x 18,7-81,2 et y 12,1-96,1
     const PLAN = { x: 0.187, y: 0.121, w: 0.625, h: 0.84 };
 
     function computeMinScale() {
         if (!canvas.offsetHeight) return 0.3;
         const sx = area.clientWidth / (canvas.offsetWidth * PLAN.w),
             sy = area.clientHeight / (canvas.offsetHeight * PLAN.h);
-        // mobile : le plan remplit l'écran (aucun vide) ; à partir de 768px il tient en entier,
-        // l'écran étant paysage et le plan portrait
+        // mobile plein écran, dès 768px le plan tient entier
         return area.clientWidth < 768 ? Math.max(sx, sy) : Math.min(sx, sy);
     }
 
-    // bornes calculées sur le cadre dessiné, pas sur le webp : sinon on peut se déplacer
-    // dans la marge blanche, très visible sur mobile où le plan déborde de l'écran
+    // limites sur le plan dessiné, pas sur la marge blanche
     function clampPan() {
         const w = canvas.offsetWidth * PLAN.w * scale,
             h = canvas.offsetHeight * PLAN.h * scale,
@@ -693,7 +693,7 @@ document
     function initFit() {
         SCALE_MIN = computeMinScale();
         scale = SCALE_MIN;
-        // centré sur le plan, pas sur l'image : sinon la marge blanche entre dans le cadrage
+        // centré sur le plan, sans la marge blanche autour
         tx = area.clientWidth / 2 - (PLAN.x + PLAN.w / 2) * canvas.offsetWidth * scale;
         ty = area.clientHeight / 2 - (PLAN.y + PLAN.h / 2) * canvas.offsetHeight * scale;
         clampPan();
@@ -712,7 +712,7 @@ document
         applyTransform();
     });
 
-    // zoom molette
+    // zoomer avec la molette de la souris
     area.addEventListener(
         "wheel",
         (e) => {
@@ -733,7 +733,7 @@ document
         { passive: false },
     );
 
-    // pan souris
+    // déplacer la carte en glissant la souris
     area.addEventListener("mousedown", (e) => {
         if (
             e.target.closest(
@@ -758,7 +758,7 @@ document
         dragging = false;
     });
 
-    // pan + zoom touch (pinch)
+    // déplacer et zoomer avec les doigts sur mobile
     area.addEventListener(
         "touchstart",
         (e) => {
@@ -821,10 +821,10 @@ document
     });
 })();
 
-// init
+// on lance tout au chargement de la page
 loadMap();
 
-// sidebar toggle
+// ouvrir ou fermer le panneau sur le côté
 const _sidebar = document.getElementById("sidebar-panel");
 const _trigger = document.getElementById("sidebar-trigger-zone");
 if (_sidebar && _trigger) {
@@ -834,9 +834,9 @@ if (_sidebar && _trigger) {
     });
 }
 
-// carte est un point d'arrivée
+// la carte est la page d'arrivée de l'élève
 if (document.querySelector(".map-wrapper[data-student]")) {
-    // retour arrière pas possible
+    // on bloque le bouton retour du navigateur
     history.pushState(null, "", location.href);
     addEventListener("popstate", () =>
         history.pushState(null, "", location.href),
