@@ -73,7 +73,9 @@ class ActivityRepository extends ServiceEntityRepository
             ->select('a.id', 'c.type')
             ->join('a.category', 'c')
             ->where('(a.sphere IS NOT NULL AND c.type = :stand) OR (a.sphere IS NULL AND c.type <> :stand)')
+            ->andWhere('c.type <> :pause')
             ->setParameter('stand', ActivityCategory::TYPE_STAND)
+            ->setParameter('pause', ActivityCategory::TYPE_PAUSE)
             ->getQuery()
             ->getScalarResult();
 
